@@ -37,6 +37,8 @@ export const SERVICE: any = {
     SCRATCH_CARDS: "get-scratch-cards",
     SCRATCHED_STATUS_UPDATE: "scratched-status-update",
     USER_DASHBOARD: "user-dashboard",
+    ADMIN_DASHBOARD: "admin-dashboard",
+
 
     //Export 
     EXPORT_EXCEL: 'withdraws/export/excel',
@@ -49,9 +51,12 @@ export const SERVICE: any = {
     PROMOTION_VIDEO_QUIZ_UPDATE: 'user-promoter-quiz-result-get',
     PROMOTION_VIDEO_QUIZ_CONFIRM: 'user-promoter-quiz-result-confirmation',
 
+
     USER_TRAINING_CURRENCT: 'user-training-current',
     TRAINING_STATUS_UPDATE: 'user-day-training-mark-as-completed',
     EARNINGS_HISTORY: 'earning-histories',
     WITHDRAW_HISTRY: 'withdraw-histories',
     WITHDRAW_REQUEST: 'withdraws'
+
+
 }

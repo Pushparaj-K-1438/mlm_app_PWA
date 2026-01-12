@@ -1,101 +1,100 @@
 // @ts-nocheck
 import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
-import MobileLayout from "@/layout/MobileLayout";
+import PortalLayout from "@/layout/PortalLayout";
 import Loadable from "@/components/ui/Loadable";
 
 const UserDashboard = Loadable(
-    lazy(() => import("@/app/User/UserDashboard/UserDashboard"))
+  lazy(() => import("@/app/Panel/USER/UserDashboard/UserDashboard"))
 );
 
 const DailyVideoWatch = Loadable(
-    lazy(() => import("@/app/User/DailyVideoWatch"))
+  lazy(() => import("@/app/Panel/USER/DailyVideoWatch"))
 );
 const TrainingProgram = Loadable(
-    lazy(() => import("@/app/User/TrainingProgram"))
+  lazy(() => import("@/app/Panel/USER/TrainingProgram"))
 );
 const PromotionVideos = Loadable(
-    lazy(() => import("@/app/User/PromotionVideos"))
+  lazy(() => import("@/app/Panel/USER/PromotionVideos"))
 );
 const PinRequests = Loadable(
-    lazy(() => import("@/app/User/PinRequests"))
+  lazy(() => import("@/app/Panel/USER/PinRequests"))
 );
 const ReferralTree = Loadable(
-    lazy(() => import("@/app/User/ReferralTree"))
+  lazy(() => import("@/app/Panel/USER/ReferralTree"))
 );
 const EarningsHistory = Loadable(
-    lazy(() => import("@/app/User/EarningsHistory"))
+  lazy(() => import("@/app/Panel/USER/EarningsHistory"))
 );
 const WithdrawRequests = Loadable(
-    lazy(() => import("@/app/User/WithdrawRequests"))
+  lazy(() => import("@/app/Panel/USER/WithdrawRequests"))
 );
 const YoutubeChannels = Loadable(
-    lazy(() => import("@/app/User/YoutubeChannels"))
+  lazy(() => import("@/app/Panel/USER/YoutubeChannels"))
 );
 const Profile = Loadable(
-    lazy(() => import("@/app/User/UserDashboard/ProfileSettings/Profile"))
+  lazy(() => import("@/app/Panel/USER/UserDashboard/ProfileSettings/Profile"))
 );
 const ScratchCard = Loadable(
-    lazy(() => import("@/app/User/ScratchCard"))
+  lazy(() => import("@/app/Panel/USER/ScratchCard"))
 );
 const ContactUs = Loadable(
-    lazy(() => import("@/app/User/ContactUs"))
+  lazy(() => import("@/app/Panel/USER/ContactUs"))
 );
-
 const NormalUserRoutes = {
-    path: "portal/user",
-    element: <MobileLayout />,
-    children: [
-        {
-            path: "dashboard",
-            element: <UserDashboard />,
-        },
+  path: "portal/user",
+  element: <PortalLayout />,
+  children: [
+    {
+      path: "dashboard",
+      element: <UserDashboard />,
+    },
 
-        {
-            path: "daily-video-watch",
-            element: <DailyVideoWatch />,
-        },
-        {
-            path: "training-program",
-            element: <TrainingProgram />,
-        },
-        {
-            path: "promotion-videos",
-            element: <PromotionVideos />,
-        },
-        {
-            path: "pin-requests",
-            element: <PinRequests />,
-        },
-        {
-            path: "referrals",
-            element: <ReferralTree />,
-        },
-        {
-            path: "earnings-history",
-            element: <EarningsHistory />,
-        },
-        {
-            path: "withdraw-requests",
-            element: <WithdrawRequests />,
-        },
-        {
-            path: "youtube-channels",
-            element: <YoutubeChannels />,
-        },
-        {
-            path: "profile-settings",
-            element: <Profile />,
-        },
-        {
-            path: "scratch-card",
-            element: <ScratchCard />,
-        },
-        {
-            path: "contact-us",
-            element: <ContactUs />,
-        },
-    ],
+    {
+      path: "daily-video-watch",
+      element: <DailyVideoWatch />,
+    },
+    {
+      path: "training-program",
+      element: <TrainingProgram />,
+    },
+    {
+      path: "promotion-videos",
+      element: <PromotionVideos />,
+    },
+    {
+      path: "pin-requests",
+      element: <PinRequests />,
+    },
+    {
+      path: "referrals",
+      element: <ReferralTree />,
+    },
+    {
+      path: "earnings-history",
+      element: <EarningsHistory />,
+    },
+    {
+      path: "withdraw-requests",
+      element: <WithdrawRequests />,
+    },
+    {
+      path: "youtube-channels",
+      element: <YoutubeChannels />,
+    },
+    {
+      path: "profile-settings",
+      element: <Profile />,
+    },
+    {
+      path: "scratch-card",
+      element: <ScratchCard />,
+    },
+    {
+      path: "contact-us",
+      element: <ContactUs />,
+    },
+  ],
 };
 
 export default NormalUserRoutes;

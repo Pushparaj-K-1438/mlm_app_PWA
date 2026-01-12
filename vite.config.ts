@@ -5,91 +5,79 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-    server: {
-        host: "::",
-        port: 3000, // Different port from main app
+  server: {
+    host: "::",
+    port: 8080,
+  },
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "logo.png", "robots.txt"],
+      manifest: false, // We're using a custom manifest file
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/be\.starup\.in\/api\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+              networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "image-cache",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
+          {
+            urlPattern: /.*\.js/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "js-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+              },
+            },
+          },
+          {
+            urlPattern: /.*\.css/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "css-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+              },
+            },
+          },
+        ],
+      },
+      devOptions: {
+        enabled: true,
+        type: "module",
+      },
+    }),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
-    plugins: [
-        react(),
-        VitePWA({
-            registerType: "autoUpdate",
-            includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
-            manifest: {
-                name: "Customer Portal - StarMLM",
-                short_name: "Customer",
-                description: "Customer portal for StarMLM platform",
-                theme_color: "#10b981",
-                background_color: "#ffffff",
-                display: "standalone",
-                orientation: "portrait",
-                scope: "/",
-                start_url: "/",
-                icons: [
-                    {
-                        src: "/icons/icon-192x192.png",
-                        sizes: "192x192",
-                        type: "image/png",
-                        purpose: "any",
-                    },
-                    {
-                        src: "/icons/icon-512x512.png",
-                        sizes: "512x512",
-                        type: "image/png",
-                        purpose: "any",
-                    },
-                    {
-                        src: "/icons/icon-192x192-maskable.png",
-                        sizes: "192x192",
-                        type: "image/png",
-                        purpose: "maskable",
-                    },
-                    {
-                        src: "/icons/icon-512x512-maskable.png",
-                        sizes: "512x512",
-                        type: "image/png",
-                        purpose: "maskable",
-                    },
-                ],
-            },
-            workbox: {
-                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https:\/\/api\.starupworld\.com\/api\/v1\/.*/i,
-                        handler: "NetworkFirst",
-                        options: {
-                            cacheName: "api-cache",
-                            expiration: {
-                                maxEntries: 50,
-                                maxAgeSeconds: 60 * 60, // 1 hour
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                    {
-                        urlPattern: /^https:\/\/api\.starupworld\.com\/.*/i,
-                        handler: "CacheFirst",
-                        options: {
-                            cacheName: "storage-cache",
-                            expiration: {
-                                maxEntries: 100,
-                                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-                            },
-                        },
-                    },
-                ],
-            },
-            devOptions: {
-                enabled: true, // Enable PWA in development
-            },
-        }),
-    ],
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "./src"),
-        },
-    },
+  },
 }));

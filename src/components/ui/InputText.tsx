@@ -2,7 +2,7 @@ const InputText = ({
   type = "text",
   label = "",
   placeholder = "placeholder",
-  onChange = () => { },
+  onChange = () => {},
   name = "name",
   error = {},
   value = {},
@@ -25,7 +25,7 @@ const InputText = ({
         readOnly={readOnly}
         disabled={disabled || readOnly}
         min={minDate}
-        className="w-full h-12 px-4 py-3 text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
       />
       <p className="text-sm text-red-800 pt-1" role="alert">
         {error[name]}

@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-137dedbd'], (function (workbox) { 'use strict';
+define(['./workbox-237f2c1f'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -82,25 +82,40 @@ define(['./workbox-137dedbd'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "index.html",
-    "revision": "0.0dtkthnfn6g"
+    "revision": "0.1fkp5r7bs1o"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/]
   }));
-  workbox.registerRoute(/^https:\/\/api\.starupworld\.com\/api\/v1\/.*/i, new workbox.NetworkFirst({
+  workbox.registerRoute(/^https:\/\/be\.starup\.in\/api\/.*/i, new workbox.NetworkFirst({
     "cacheName": "api-cache",
+    "networkTimeoutSeconds": 10,
     plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 50,
-      maxAgeSeconds: 3600
+      maxEntries: 100,
+      maxAgeSeconds: 86400
     }), new workbox.CacheableResponsePlugin({
       statuses: [0, 200]
     })]
   }), 'GET');
-  workbox.registerRoute(/^https:\/\/api\.starupworld\.com\/.*/i, new workbox.CacheFirst({
-    "cacheName": "storage-cache",
+  workbox.registerRoute(/^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/i, new workbox.CacheFirst({
+    "cacheName": "image-cache",
     plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 100,
+      maxEntries: 200,
+      maxAgeSeconds: 2592000
+    })]
+  }), 'GET');
+  workbox.registerRoute(/.*\.js/i, new workbox.StaleWhileRevalidate({
+    "cacheName": "js-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 50,
+      maxAgeSeconds: 604800
+    })]
+  }), 'GET');
+  workbox.registerRoute(/.*\.css/i, new workbox.StaleWhileRevalidate({
+    "cacheName": "css-cache",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 50,
       maxAgeSeconds: 604800
     })]
   }), 'GET');

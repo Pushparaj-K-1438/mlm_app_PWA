@@ -10,22 +10,22 @@ const Welcome = Loadable(lazy(() => import("../../app/Auth/Welcome")));
 
 // Properly typed route config
 const AuthRoutes = {
-    path: "",
-    element: <AuthLayout />,
-    children: [
-        {
-            path: "",
-            element: <Welcome />,
-        },
-        {
-            path: "login",
-            element: <Login />,
-        },
-        {
-            path: "register",
-            element: <Register />,
-        },
-    ],
+  path: "",
+  element: <AuthLayout />,
+  children: [
+    {
+      path: "",
+      element: <Welcome />,
+    },
+    {
+      path: "login",
+      element: <Login />,
+    },
+    {
+      path: "register",
+      element: <Register />,
+    },
+  ],
 };
 
 export default AuthRoutes;
