@@ -1,5 +1,5 @@
 import TableUI from "./TableUi";
-import { HeaderCell } from "./TableUi";
+import { HeaderCell } from "./HeaderCell";
 
 const DataTable = ({
   columns = [],
@@ -63,6 +63,7 @@ const DataTable = ({
       onPageChange={onPageChange}
       isLoading={isLoading}
       setPageSize={setPageSize}
+      showMobileView={true}
     />
   );
 };

@@ -13,6 +13,7 @@ import {
   Calendar,
   AlertCircle,
   MessageCircle,
+  Filter,
 } from "lucide-react";
 import UIHelpers from "@/utils/UIhelper";
 import { MODAL_OPEN, WIDTHDROW_STATUS } from "@/constants/others";
@@ -68,6 +69,7 @@ const formatAmount = (amount) => {
   const sign = amount >= 0 ? "+" : "";
   return `${sign}₹${Lib.formatAmount(Math.abs(amount))}`;
 };
+
 function WithdrawRequestsPage() {
   const Columns: any = [
     {
@@ -174,15 +176,17 @@ function WithdrawRequestsPage() {
   if (widthDrawHistoryLoading) {
     return <Loader />;
   }
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
+    <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-gray-900">
               Withdrawal Requests
             </h1>
-            <p className="mt-2 text-gray-600">
+            <p className="text-sm text-gray-600 mt-1">
               Manage your withdrawal requests and track payment status
             </p>
           </div>
@@ -192,7 +196,7 @@ function WithdrawRequestsPage() {
                 options: { Modal: MODAL_OPEN.WITHDRAW_REQUEST },
               })
             }
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Withdrawal
@@ -201,53 +205,68 @@ function WithdrawRequestsPage() {
       </div>
 
       {/* Balance Overview */}
-      <UserFinanceWidget />
+      <div className="px-6 mt-6">
+        <UserFinanceWidget />
+      </div>
 
       {/* Withdrawal Guidelines */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
-        <h3 className="text-lg font-medium text-blue-900 mb-4 flex items-center">
-          <AlertCircle className="w-5 h-5 mr-2" />
-          Withdrawal Guidelines
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ul className="space-y-2 text-blue-800">
-            <li className="flex items-start">
-              <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              Minimum withdrawal amount: ₹100
-            </li>
-            <li className="flex items-start">
-              <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              30 days once withdrawal
-            </li>
-          </ul>
-          <ul className="space-y-2 text-blue-800">
-            <li className="flex items-start">
-              <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              Ensure account details are accurate
-            </li>
-          </ul>
+      <div className="px-6 mt-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            Withdrawal Guidelines
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-start">
+              <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+              <div>
+                <div className="font-medium text-blue-900">Minimum withdrawal amount</div>
+                <div className="text-sm text-blue-700">₹100</div>
+              </div>
+            </div>
+            <div className="flex items-start">
+              <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+              <div>
+                <div className="font-medium text-blue-900">Withdrawal frequency</div>
+                <div className="text-sm text-blue-700">Once every 30 days</div>
+              </div>
+            </div>
+            <div className="flex items-start">
+              <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+              <div>
+                <div className="font-medium text-blue-900">Account accuracy</div>
+                <div className="text-sm text-blue-700">Ensure account details are accurate</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <FilterTab
-        filter={filter}
-        setFilter={setFilter}
-        TABLE_FILTER={["SEARCH"]}
-      />
-
-      {/* Withdrawals Table */}
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-        <DataTable
-          columns={Columns}
-          data={withDrawHistoryInfo?.data || []}
-          loading={widthDrawHistoryLoading}
+      {/* Filter Section */}
+      <div className="px-6 mt-6">
+        <FilterTab
           filter={filter}
           setFilter={setFilter}
-          totalRecords={withDrawHistoryInfo?.pageInfo?.total_records ?? 0}
-          searchPlaceholder="Search training videos..."
-          showSearch={true}
-          showPagination={true}
+          TABLE_FILTER={["SEARCH"]}
         />
+      </div>
+
+      {/* Withdrawals Table */}
+      <div className="px-6 mt-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <DataTable
+            columns={Columns}
+            data={withDrawHistoryInfo?.data || []}
+            loading={widthDrawHistoryLoading}
+            filter={filter}
+            setFilter={setFilter}
+            totalRecords={withDrawHistoryInfo?.pageInfo?.total_records ?? 0}
+            searchPlaceholder="Search withdrawals..."
+            showSearch={true}
+            showPagination={true}
+            showMobileView={true}
+          />
+        </div>
       </div>
 
       {Modal == MODAL_OPEN.WITHDRAW_REQUEST && (

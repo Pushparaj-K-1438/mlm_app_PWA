@@ -14,19 +14,19 @@ const queryClient = new QueryClient();
 
 const App: React.FC = () => {
   // Detect if the app is running as a mobile app or on a mobile device
-  const isMobileApp = useMemo(() => {
-    // Check if it's a PWA (standalone mode)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                        (window.navigator as any).standalone === true;
+  // const isMobileApp = useMemo(() => {
+  //   // Check if it's a PWA (standalone mode)
+  //   const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+  //                       (window.navigator as any).standalone === true;
 
-    // Check if mobile device
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    ) || window.innerWidth < 768;
-
-    // Use mobile routes if it's a PWA or a small screen device
-    return isStandalone || isMobileDevice;
-  }, []);
+  //   // Check if mobile device
+  //   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+  //     navigator.userAgent
+  //   ) || window.innerWidth < 768;
+  //   // Use mobile routes if it's a PWA or a small screen device
+  //   return isStandalone || isMobileDevice;
+  // }, []);
+    const isMobileApp=true;
 
   return (
     <QueryClientProvider client={queryClient}>

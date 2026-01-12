@@ -9,6 +9,7 @@ import Btn from "@/components/ui/Btn";
 import CheckboxInput from "@/components/ui/CheckboxInput";
 import { OPTIONS } from "@/constants/others";
 import { STATE_OPTIONS, DISTRICTS_OPTIONS } from "@/constants/state";
+import { User, Calendar, Phone, MapPin, Globe, Lock, CreditCard, Check, UserPlus } from "lucide-react";
 
 export const VALIDATION_SCHEMA = Yup.object().shape({
   first_name: Yup.string().required("First Name is required*"),
@@ -73,134 +74,203 @@ const ReferalAddForm = ({
   }, [RequestError]);
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <InputText
-          name="first_name"
-          label="First Name *"
-          placeholder="Enter First Name"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-        <InputText
-          name="last_name"
-          label="Last Name *"
-          placeholder="Enter Last Name"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <InputText
-          name="dob"
-          label="Date Of Birth *"
-          type="date"
-          placeholder="Date Of Birth"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-        <InputText
-          name="mobile"
-          label="Mobile *"
-          type="number"
-          placeholder="Enter Mobile Number"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <InputText
-          name="nationality"
-          label="Nationality *"
-          value={values}
-          onChange={handleChange}
-          error={errors}
-          readOnly={true}
-        />
-        <SelectInput
-          name="state"
-          label="Select State *"
-          placeholder="Select State"
-          options={STATE_OPTIONS()}
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <SelectInput
-          name="district"
-          label="Select District *"
-          placeholder="Select District"
-          options={DISTRICTS_OPTIONS(values?.state ?? "")}
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-        <InputText
-          name="city"
-          label="city *"
-          placeholder="Enter City"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <InputText
-          name="pin_code"
-          label="Pin Code *"
-          placeholder="Enter Pin Code"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-        <SelectInput
-          name="language"
-          label="Select Mother tongue*"
-          placeholder="Select Mother tongue"
-          options={OPTIONS.LANG}
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <InputText
-          name="username"
-          label="Username *"
-          placeholder="Enter Username"
-          onChange={handleChange}
-          error={errors}
-          value={values}
-        />
-        <PasswordInput
-          name="password"
-          label="Password *"
-          placeholder="Enter Password"
-          value={values}
-          onChange={handleChange}
-          error={errors}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <PasswordInput
-          name="password_confirmation"
-          label="Confirm Password *"
-          placeholder="Enter Password"
-          value={values}
-          onChange={handleChange}
-          error={errors}
-        />
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Personal Information Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <User className="w-5 h-5 text-blue-600 mr-2" />
+          Personal Information
+        </h3>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <InputText
+              name="first_name"
+              label="First Name *"
+              placeholder="Enter First Name"
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+            <InputText
+              name="last_name"
+              label="Last Name *"
+              placeholder="Enter Last Name"
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center mb-2">
+                <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                <label className="text-sm font-medium text-gray-700">Date of Birth *</label>
+              </div>
+              <InputText
+                name="dob"
+                type="date"
+                placeholder="Date of Birth"
+                onChange={handleChange}
+                error={errors}
+                value={values}
+              />
+            </div>
+            <div>
+              <div className="flex items-center mb-2">
+                <Phone className="w-4 h-4 text-gray-500 mr-2" />
+                <label className="text-sm font-medium text-gray-700">Mobile *</label>
+              </div>
+              <InputText
+                name="mobile"
+                type="number"
+                placeholder="Enter Mobile Number"
+                onChange={handleChange}
+                error={errors}
+                value={values}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4">
-        <Btn title="Cancel" onClick={onCloseModal} uiType="secondary" />
-        <Btn title={"Submit"} isLoading={loading} onClick={handleSubmit} />
+      {/* Location Information Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <MapPin className="w-5 h-5 text-green-600 mr-2" />
+          Location Information
+        </h3>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center mb-2">
+                <Globe className="w-4 h-4 text-gray-500 mr-2" />
+                <label className="text-sm font-medium text-gray-700">Nationality *</label>
+              </div>
+              <InputText
+                name="nationality"
+                value={values}
+                onChange={handleChange}
+                error={errors}
+                readOnly={true}
+              />
+            </div>
+            <SelectInput
+              name="state"
+              label="State *"
+              placeholder="Select State"
+              options={STATE_OPTIONS()}
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <SelectInput
+              name="district"
+              label="District *"
+              placeholder="Select District"
+              options={DISTRICTS_OPTIONS(values?.state ?? "")}
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+            <InputText
+              name="city"
+              label="City *"
+              placeholder="Enter City"
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <InputText
+              name="pin_code"
+              label="Pin Code *"
+              placeholder="Enter Pin Code"
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+            <SelectInput
+              name="language"
+              label="Language *"
+              placeholder="Select Language"
+              options={OPTIONS.LANG}
+              onChange={handleChange}
+              error={errors}
+              value={values}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Account Information Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Lock className="w-5 h-5 text-purple-600 mr-2" />
+          Account Information
+        </h3>
+        <div className="space-y-4">
+          <InputText
+            name="username"
+            label="Username *"
+            placeholder="Enter Username"
+            onChange={handleChange}
+            error={errors}
+            value={values}
+          />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <PasswordInput
+              name="password"
+              label="Password *"
+              placeholder="Enter Password"
+              value={values}
+              onChange={handleChange}
+              error={errors}
+            />
+            <PasswordInput
+              name="password_confirmation"
+              label="Confirm Password *"
+              placeholder="Confirm Password"
+              value={values}
+              onChange={handleChange}
+              error={errors}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex space-x-3 pt-2">
+        <button
+          type="button"
+          onClick={onCloseModal}
+          className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
+        >
+          {loading ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Adding...
+            </div>
+          ) : (
+            <>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Add Promoter
+            </>
+          )}
+        </button>
       </div>
     </form>
   );
