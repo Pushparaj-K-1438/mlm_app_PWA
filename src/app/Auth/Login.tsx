@@ -6,6 +6,7 @@ import { useActionCall, useQueryParams } from "@/hooks";
 import { useFormik } from "formik";
 import { SERVICE } from "@/constants/services";
 import logo from '@/assets/logo.png';
+import Lib from "@/utils/Lib";
 
 export default function Login() {
   const { login } = useAuth();
@@ -13,7 +14,7 @@ export default function Login() {
   const [loginMethod, setLoginMethod] = useState<"username" | "mobile">(
     "username"
   );
-
+const [adminLoginError, setAdminLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const { values, handleChange, errors, handleSubmit } = useFormik({
@@ -24,6 +25,15 @@ export default function Login() {
     onSubmit: async (values) => {
       let response: any = await Post(values, "Login successfull");
       if (response) {
+    const decodedToken = Lib.DecodeJwt(response.data.access_token);
+      
+      if (decodedToken.role !== 2) {
+        setAdminLoginError("Admin login is not allowed through this form. Please use the admin portal.");
+        return;
+      }
+      
+      setAdminLoginError("");
+      
         login(response.data.access_token);
       }
     },
@@ -53,7 +63,11 @@ export default function Login() {
             Sign in to your account to continue
           </p>
         </div>
-
+{adminLoginError && (
+  <div className="mt-2 text-sm text-red-600">
+    {adminLoginError}
+  </div>
+)}
         <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8">
           {/* Login Method Toggle */}
           {/* <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
