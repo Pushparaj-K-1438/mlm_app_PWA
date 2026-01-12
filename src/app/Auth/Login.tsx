@@ -56,7 +56,7 @@ export default function Login() {
 
         <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8">
           {/* Login Method Toggle */}
-          <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
+          {/* <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
             <button
               type="button"
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
@@ -79,7 +79,7 @@ export default function Login() {
             >
               Mobile
             </button>
-          </div>
+          </div> */}
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             {/* Username/Mobile Input */}
@@ -215,7 +215,7 @@ export default function Login() {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-gray-600">
+          {/* <p className="text-gray-600">
             Don't have an account?{" "}
             <Link
               to="/register"
@@ -223,7 +223,7 @@ export default function Login() {
             >
               Sign Up
             </Link>
-          </p>
+          </p> */}
       
         </div>
       </div>
