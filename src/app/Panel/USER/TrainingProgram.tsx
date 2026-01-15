@@ -28,7 +28,10 @@ import QuizForm from "@/components/QuizeForm";
 import Lib from "@/utils/Lib";
 import Error500 from "@/components/ui/Error500";
 import { LANG } from "@/constants/others";
-import { getVideoPlayerConfig, videoContainerProps } from "@/utils/videoPlayerConfig";
+import {
+  getVideoPlayerConfig,
+  videoContainerProps,
+} from "@/utils/videoPlayerConfig";
 
 const TrainingProgramWatch = () => {
   const { data, loading, setQuery, error } = useGetCall(
@@ -56,11 +59,11 @@ const TrainingProgramWatch = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Handle fullscreen change
@@ -70,11 +73,11 @@ const TrainingProgramWatch = () => {
         setIsFullscreen(false);
       }
     };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -84,14 +87,14 @@ const TrainingProgramWatch = () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     } else {
       setShowControls(true);
     }
-    
+
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
@@ -147,7 +150,7 @@ const TrainingProgramWatch = () => {
           setIsFullscreen(true);
         }
       } catch (error) {
-        console.error('Error attempting to enable fullscreen:', error);
+        console.error("Error attempting to enable fullscreen:", error);
       }
     } else {
       try {
@@ -162,7 +165,7 @@ const TrainingProgramWatch = () => {
         }
         setIsFullscreen(false);
       } catch (error) {
-        console.error('Error attempting to exit fullscreen:', error);
+        console.error("Error attempting to exit fullscreen:", error);
       }
     }
   };
@@ -359,7 +362,7 @@ const TrainingProgramWatch = () => {
               <div
                 className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
                 style={{
-                  width: `${((data?.data?.training?.day) / 7) * 100}%`,
+                  width: `${(data?.data?.training?.day / 7) * 100}%`,
                 }}
               ></div>
             </div>
@@ -377,38 +380,54 @@ const TrainingProgramWatch = () => {
                     <BookOpen className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-blue-600">Days 1</div>
-                    <div className="text-gray-900 font-medium">Welcome Video</div>
+                    <div className="text-sm font-medium text-blue-600">
+                      Days 1
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      Welcome Video
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center p-3 bg-green-50 rounded-xl">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <Target className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-green-600">Days 2-3</div>
-                    <div className="text-gray-900 font-medium">Company Plan Video</div>
+                    <div className="text-sm font-medium text-green-600">
+                      Days 2-3
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      Company Plan Video
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center p-3 bg-purple-50 rounded-xl">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                     <Award className="w-5 h-5 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-purple-600">Days 4-5</div>
-                    <div className="text-gray-900 font-medium">How Work Video</div>
+                    <div className="text-sm font-medium text-purple-600">
+                      Days 4-5
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      How Work Video
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center p-3 bg-orange-50 rounded-xl">
                   <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
                     <Play className="w-5 h-5 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-orange-600">Days 6-7</div>
-                    <div className="text-gray-900 font-medium">Demo Working</div>
+                    <div className="text-sm font-medium text-orange-600">
+                      Days 6-7
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      Demo Working
+                    </div>
                   </div>
                 </div>
               </div>
@@ -416,13 +435,15 @@ const TrainingProgramWatch = () => {
           </div>
 
           {/* Video Player Section */}
-          <div 
+          <div
             className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
-            <div 
-              className={`${isFullscreen ? 'h-screen' : 'aspect-video'} bg-gray-900 relative`}
+            <div
+              className={`${
+                isFullscreen ? "h-screen" : "aspect-video"
+              } bg-gray-900 relative`}
               {...videoContainerProps}
             >
               {data?.data?.training?.training_video?.video_path ||
@@ -480,7 +501,9 @@ const TrainingProgramWatch = () => {
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">
                     <div className="text-white">
-                      <h3 className="font-medium">Day {data?.data?.training?.day} Training</h3>
+                      <h3 className="font-medium">
+                        Day {data?.data?.training?.day} Training
+                      </h3>
                     </div>
                     <div className="flex space-x-2">
                       <button
@@ -576,7 +599,7 @@ const TrainingProgramWatch = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <p className="text-gray-600 mb-4">
                   {data?.data?.training?.training_video?.description}
                 </p>
@@ -604,19 +627,30 @@ const TrainingProgramWatch = () => {
                 <ul className="space-y-3 text-blue-800">
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>You must watch the daily information video completely before accessing other features</span>
+                    <span>
+                      You must watch the daily information video completely
+                      before accessing other features
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>The video contains important updates and information for your daily activities</span>
+                    <span>
+                      The video contains important updates and information for
+                      your daily activities
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Once completed, you'll have full access to training, promotion videos, and other features</span>
+                    <span>
+                      Once completed, you'll have full access to training,
+                      promotion videos, and other features
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Tap the screen to show/hide controls while playing</span>
+                    <span>
+                      Tap the screen to show/hide controls while playing
+                    </span>
                   </li>
                 </ul>
               </div>
