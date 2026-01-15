@@ -107,3 +107,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile typography adjustments: reduce root font-size so rem-based text scales down */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  html {
+    font-size: 13px;
+  }
+}
+
+/* Prevent mobile browsers from auto-adjusting text size */
+html, body {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}

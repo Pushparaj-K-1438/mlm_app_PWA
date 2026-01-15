@@ -16,7 +16,7 @@ const TrainingVideoWarning = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 safe-area-inset-bottom pb-20 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 safe-area-inset-bottom pb-20 flex items-center justify-center px-4 sm:px-6">
       <div className="w-full max-w-md">
         {/* Warning Card */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
@@ -74,7 +74,7 @@ const TrainingVideoWarning = ({ children }) => {
             {/* Call to Action Button */}
             <Link
               to="/portal/user/training-program"
-              className="w-full flex items-center justify-center px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+              className="w-full flex items-center justify-center px-4 sm:px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
             >
               <Play className="w-5 h-5 mr-2" />
               Start Training Program

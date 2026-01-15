@@ -75,7 +75,7 @@ const ContactUs = () => {
       </div>
 
       {/* Contact Information */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">

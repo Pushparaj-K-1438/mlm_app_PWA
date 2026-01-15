@@ -44,10 +44,10 @@ const WithDrawRequestModal = ({ recoilApi = () => {} }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end justify-center safe-area-inset-bottom">
+    <div className="fixed inset-0 bottom-20 z-50 bg-black bg-opacity-50 flex items-end justify-center safe-area-inset-bottom">
       <div className="bg-white w-full max-w-lg rounded-t-3xl shadow-2xl animate-slide-up">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4 rounded-t-3xl">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-4 sm:px-6 py-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-3">

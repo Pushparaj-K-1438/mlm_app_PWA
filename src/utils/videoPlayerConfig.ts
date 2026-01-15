@@ -20,7 +20,9 @@ export const getVideoPlayerConfig = (): CustomPlayerConfig => ({
   file: {
     attributes: {
       controlsList: 'nodownload',
-      disablePictureInPicture: true
+      disablePictureInPicture: true,
+      playsInline: true,
+      'webkit-playsinline': true
     }
   },
   youtube: {

@@ -297,7 +297,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
                   </div>
 
                   {/* Menu Items */}
-                  <div className="flex-1 overflow-y-auto max-h-[calc(100vh-220px)]">
+                  <div className="flex-1 overflow-y-auto max-h-[calc(100vh-265px)]">
                     <nav className="p-4 space-y-2">
                       {menuItems.map((item) => {
                         const Icon = item.icon;
@@ -364,6 +364,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
               variant="ghost"
               size="icon"
               className="h-10 w-10 rounded-full bg-gray-100 hover:bg-gray-200"
+              onClick={() => navigate('/portal/user/profile-settings')}
             >
               <UserCircle className="h-6 w-6 text-gray-600" />
             </Button>

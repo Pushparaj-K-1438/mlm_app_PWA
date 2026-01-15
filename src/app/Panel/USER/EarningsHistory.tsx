@@ -140,12 +140,12 @@ function EarningsHistoryPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         <UserFinanceWidget />
       </div>
 
       {/* Filter Section */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         <FilterTab
           filter={filter}
           setFilter={setFilter}
@@ -154,7 +154,7 @@ function EarningsHistoryPage() {
       </div>
 
       {/* Data Table */}
-      <div className="px-6 mt-6 mb-6">
+      <div className="px-4 sm:px-6 mt-6 mb-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <DataTable
             columns={Columns}

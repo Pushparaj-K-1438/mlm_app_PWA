@@ -6,24 +6,25 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const classes = {
   table: `
+    p-4
     [&_.rc-table-content]:overflow-x-auto
     [&_table]:w-full
     [&_.rc-table-row:hover]:bg-gray-50
     [&_.rc-table-cell]:align-top
     [&_.rc-table-cell]:whitespace-nowrap
     [&_thead]:bg-gray-50
-    [&_thead_th]:px-4
-    [&_thead_th]:py-3
-    [&_thead_th]:text-left
-    [&_thead_th]:text-xs
-    [&_thead_th]:font-medium
-    [&_thead_th]:text-gray-500
-    [&_thead_th]:uppercase
-    [&_thead_th]:tracking-wider
-    [&_tbody_td]:px-4
-    [&_tbody_td]:py-3
-    [&_tbody_td]:text-sm
-    [&_tbody_td]:text-gray-700
+    [&_thead_>_th]:p-4
+    [&_thead_>_th_>_div]:p-4
+    [&_thead_>_th]:text-left
+    [&_thead_>_th]:text-xs
+    [&_thead_>_th]:font-medium
+    [&_thead_>_th]:text-gray-500
+    [&_thead_>_th]:uppercase
+    [&_thead_>_th]:tracking-wider
+    [&_tbody_>_td]:p-4
+    [&_tbody_>_td_>_div]:p-4
+    [&_tbody_>_td]:text-sm
+    [&_tbody_>_td]:text-gray-700
     [&_.rc-table-container]:border
     [&_.rc-table-container]:border-gray-200
     [&_td.rc-table-cell]:border-b
@@ -34,9 +35,9 @@ const classes = {
   mobile: `
     @media (max-width: 768px) {
       [&_.rc-table-content]:block
-      [&_.rc-table-thead]:display-none
+      [&_.rc-table-thead]:hidden
       [&_.rc-table-tbody]:block
-      [&_.rc-table-row]:display:flex
+      [&_.rc-table-row]:flex
       [&_.rc-table-row]:flex-col
       [&_.rc-table-row]:border-b
       [&_.rc-table-row]:border-gray-200
@@ -44,7 +45,7 @@ const classes = {
       [&_.rc-table-row]:pb-4
       [&_.rc-table-row]:last:border-b-0
       [&_.rc-table-row]:last:mb-0
-      [&_.rc-table-cell]:display:block
+      [&_.rc-table-cell]:block
       [&_.rc-table-cell]:w-full
       [&_.rc-table-cell]:px-4
       [&_.rc-table-cell]:py-2
@@ -76,7 +77,8 @@ export default function TableUI({
   const mobileColumns = columns.map((col, index) => ({
     ...col,
     onCell: (record, rowIndex) => ({
-      'data-label': col.title?.props?.children || col.title,
+      'data-label':
+        col.title?.props?.title ?? col.title?.props?.children ?? (typeof col.title === 'string' ? col.title : ''),
     }),
   }));
 

@@ -397,7 +397,7 @@ function PromotionVideosPage() {
 
           {/* Video Player Section */}
           <div 
-            className="bg-black mx-6 mt-6 rounded-2xl overflow-hidden"
+            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
@@ -420,6 +420,9 @@ function PromotionVideosPage() {
                   playing={playing}
                   onTimeUpdate={handleProgress}
                   onDurationChange={handleDurationChange}
+                  muted={isMuted}
+                  playsinline
+                  config={getVideoPlayerConfig()}
                   onEnded={handlevideoWatchCompleted}
                   onError={(error) => {
                     console.error("ReactPlayer Error:", error);
