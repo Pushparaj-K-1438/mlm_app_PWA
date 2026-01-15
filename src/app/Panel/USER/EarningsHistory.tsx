@@ -10,7 +10,8 @@ import {
   Award,
   ArrowUpRight,
   ArrowDownRight,
-  Icon,
+  Search,
+  Filter,
 } from "lucide-react";
 import { SERVICE } from "@/constants/services";
 import { useGetCall, useQueryParams } from "@/hooks";
@@ -131,40 +132,42 @@ function EarningsHistoryPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Earnings History
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Track all your earnings, bonuses, and transactions
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
+        <h1 className="text-xl font-bold text-gray-900">Earnings History</h1>
+        <p className="text-sm text-gray-600 mt-1">Track all your earnings and transactions</p>
       </div>
 
       {/* Summary Cards */}
-      <UserFinanceWidget />
+      <div className="px-6 mt-6">
+        <UserFinanceWidget />
+      </div>
 
-      <FilterTab
-        filter={filter}
-        setFilter={setFilter}
-        TABLE_FILTER={["SEARCH"]}
-      />
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-        <DataTable
-          columns={Columns}
-          data={earningsHistory?.data || []}
-          loading={earningsHistoryLoading}
+      {/* Filter Section */}
+      <div className="px-6 mt-6">
+        <FilterTab
           filter={filter}
           setFilter={setFilter}
-          totalRecords={earningsHistory?.pageInfo?.total_records ?? 0}
-          searchPlaceholder="Search training videos..."
-          showSearch={true}
-          showPagination={true}
+          TABLE_FILTER={["SEARCH"]}
         />
+      </div>
+
+      {/* Data Table */}
+      <div className="px-6 mt-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <DataTable
+            columns={Columns}
+            data={earningsHistory?.data || []}
+            loading={earningsHistoryLoading}
+            filter={filter}
+            setFilter={setFilter}
+            totalRecords={earningsHistory?.pageInfo?.total_records ?? 0}
+            searchPlaceholder="Search earnings..."
+            showSearch={true}
+            showPagination={true}
+          />
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import {
 import InputText from "@/components/ui/InputText";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Lock } from "lucide-react";
+import { User, Lock, CreditCard, Shield, Camera, Edit, Check } from "lucide-react";
 import { useActionCall, useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
@@ -53,6 +53,7 @@ export const PASSWORD_VALIDATION_SCHEMA = Yup.object().shape({
       "Confirm Passwords must match New Password"
     ),
 });
+
 const Profile = () => {
   const {
     loading,
@@ -178,374 +179,336 @@ const Profile = () => {
   }, [bankRequestError]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="mt-2 text-gray-600">
-          Manage your account and preferences
-        </p>
+    <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
+        <h1 className="text-xl font-bold text-gray-900">Profile Settings</h1>
+        <p className="text-sm text-gray-600 mt-1">Manage your account and preferences</p>
       </div>
-      {/* Main Content */}
+
       {loading ? (
         <Loader />
       ) : (
-        <main className="container p-0">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Profile Overview Card */}
-            <Card className="lg:col-span-1 shadow-soft h-fit">
-              <CardHeader className="text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative">
-                    <Avatar className="w-24 h-24 border-4 border-background shadow-elegant">
-                      <div className="w-full h-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                        <AvatarFallback className="bg-transparent text-white text-3xl font-bold">
-                          {Lib.breakTextWhileSpace(
-                            `${profileData?.data?.first_name} ${profileData?.data?.last_name}`
-                          )}
-                        </AvatarFallback>
-                      </div>
-                    </Avatar>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-xl">
-                      {profileData?.data?.first_name}{" "}
-                      {profileData?.data?.last_name}
-                    </h3>
-                  </div>
+        <div className="px-6 mt-6 space-y-6">
+          {/* Profile Overview Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex flex-col items-center">
+              <div className="relative mb-4">
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-3xl font-bold">
+                    {Lib.breakTextWhileSpace(
+                      `${profileData?.data?.first_name} ${profileData?.data?.last_name}`
+                    )}
+                  </span>
                 </div>
-              </CardHeader>
-            </Card>
-
-            {/* Settings Forms */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Personal Information */}
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <User className="w-5 h-5 text-primary" />
-                    <CardTitle>Personal Information</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Update your personal details and information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  { isProfileLocked &&
-                    <div className="text-sm text-yellow-600 bg-yellow-50 px-4 py-2 rounded-md mt-4">
-                      Your profile has been locked and cannot be edited. Please contact support if you need to make changes.
-                    </div>
-                  }
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="first_name"
-                        label="First Name *"
-                        placeholder="Enter First Name"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                        
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <InputText
-                        name="last_name"
-                        label="Last Name *"
-                        placeholder="Enter Last Name"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="mobile"
-                        label="Mobile *"
-                        type="tel"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        placeholder="Phone Number"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues || ''}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <InputText
-                        type="Date"
-                        name="dob"
-                        label="Date of Birth *"
-                        placeholder="Enter Date of Birth"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="nationality"
-                        label="Nationality *"
-                        type="text"
-                        placeholder="Nationality"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <SelectInput
-                        name="state"
-                        label="Select State *"
-                        placeholder="Select State"
-                        options={STATE_OPTIONS()}
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    <div className="space-y-2">
-                      <SelectInput
-                        name="district"
-                        label="Select District *"
-                        placeholder="Select District"
-                        options={DISTRICTS_OPTIONS(profileValues?.state ?? "")}
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <InputText
-                        name="city"
-                        label="City *"
-                        placeholder="Enter City"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="pin_code"
-                        label="Pin Code *"
-                        placeholder="Enter Pin Code"
-                        onChange={isProfileLocked ? undefined : handleProfileChange}
-                        error={isProfileLocked ? {} : profileErros}
-                        value={profileValues}
-                        disabled={isProfileLocked}
-                        readOnly={isProfileLocked}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                        <SelectInput
-                          name="language"
-                          label="Select Mother tongue*"
-                          placeholder="Select Mother tongue"
-                          options={OPTIONS.LANG}
-                          onChange={isProfileLocked ? undefined : handleProfileChange}
-                          error={isProfileLocked ? {} : profileErros}
-                          value={profileValues}
-                          disabled={isProfileLocked}
-                          readOnly={isProfileLocked}
-                        />
-                    </div>
-                  </div>
-                  {!isProfileLocked && 
-                    <Btn
-                      title="Save Changes"
-                      type="button"
-                      onClick={handleProfileSubmit}
-                      className="w-fit px-6 mt-4"
-                      isLoading={uploading}
-                    />
-                  }
-                </CardContent>
-              </Card>
-
-              {/* Bank Informations */}
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <User className="w-5 h-5 text-primary" />
-                    <CardTitle>Bank Informations</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Update your bank details and information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  { isBankLocked &&
-                    <div className="text-sm text-yellow-600 bg-yellow-50 px-4 py-2 rounded-md mt-4">
-                      Your profile has been locked and cannot be edited. Please contact support if you need to make changes.
-                    </div>
-                  }
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="acc_no"
-                        label="Account Number *"
-                        placeholder="Enter Account Number"
-                        onChange={isBankLocked ? undefined : handleBankChange}
-                        error={isBankLocked ? {} : bankErros}
-                        value={bankValues}
-                        disabled={isBankLocked}
-                        readOnly={isBankLocked}
-                        
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <InputText
-                        name="acc_name"
-                        label="Account Name *"
-                        placeholder="Enter Account Name"
-                        onChange={isBankLocked ? undefined : handleBankChange}
-                        error={isBankLocked ? {} : bankErros}
-                        value={bankValues}
-                        disabled={isBankLocked}
-                        readOnly={isBankLocked}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="bank_name"
-                        label="Bank Name *"
-                        type="text"
-                        placeholder="Enter Bank Name"
-                        onChange={isBankLocked ? undefined : handleBankChange}
-                        error={isBankLocked ? {} : bankErros}
-                        value={bankValues}
-                        disabled={isBankLocked}
-                        readOnly={isBankLocked}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <InputText
-                        type="text"
-                        name="ifsc_code"
-                        label="IFSC Code *"
-                        placeholder="Enter IFSC Code"
-                        onChange={isBankLocked ? undefined : handleBankChange}
-                        error={isBankLocked ? {} : bankErros}
-                        value={bankValues}
-                        disabled={isBankLocked}
-                        readOnly={isBankLocked}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <InputText
-                        name="branch_name"
-                        label="Branch Name *"
-                        type="text"
-                        placeholder="Enter Branch Name"
-                        onChange={isBankLocked ? undefined : handleBankChange}
-                        error={isBankLocked ? {} : bankErros}
-                        value={bankValues}
-                        disabled={isBankLocked}
-                        readOnly={isBankLocked}
-                      />
-                    </div>
-                    
-                  </div>
-                 
-                      
-                  {!isBankLocked && 
-                    <Btn
-                      title="Save Changes"
-                      type="button"
-                      onClick={handleBankSubmit}
-                      className="w-fit px-6 mt-4"
-                      isLoading={uploading}
-                    />
-                  }
-                </CardContent>
-              </Card>
-
-              {/* Security Settings */}
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-primary" />
-                    <CardTitle>Security</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Manage your password and security preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <PasswordInput
-                      name="current_password"
-                      label="Current Password *"
-                      placeholder="Enter Current Password"
-                      value={passwordValues}
-                      onChange={handleChangePassword}
-                      error={passwordErrors}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <PasswordInput
-                      name="new_password"
-                      label="Password *"
-                      placeholder="Enter New Password"
-                      value={passwordValues}
-                      onChange={handleChangePassword}
-                      error={passwordErrors}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <PasswordInput
-                      name="password_confirmation"
-                      label="Password *"
-                      placeholder="Enter Confirm Password"
-                      value={passwordValues}
-                      onChange={handleChangePassword}
-                      error={passwordErrors}
-                    />
-                  </div>
-
-                  <Btn
-                    title="Update Password"
-                    onClick={handlePasswordSubmit}
-                    isLoading={passwordUploadingLoading}
-                  />
-
-                  <Separator className="my-4" />
-                </CardContent>
-              </Card>
+                <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                  <Camera className="w-4 h-4" />
+                </button>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {profileData?.data?.first_name} {profileData?.data?.last_name}
+              </h2>
+              <p className="text-gray-500 mt-1">{profileData?.data?.email}</p>
             </div>
           </div>
-        </main>
+
+          {/* Personal Information */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+              <div className="flex items-center">
+                <User className="w-5 h-5 text-blue-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Update your personal details and information</p>
+            </div>
+            
+            <div className="p-6">
+              {isProfileLocked && (
+                <div className="text-sm text-yellow-600 bg-yellow-50 px-4 py-3 rounded-lg mb-4 flex items-center">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Your profile has been locked and cannot be edited. Please contact support if you need to make changes.
+                </div>
+              )}
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputText
+                    name="first_name"
+                    label="First Name *"
+                    placeholder="Enter First Name"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                  <InputText
+                    name="last_name"
+                    label="Last Name *"
+                    placeholder="Enter Last Name"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputText
+                    name="mobile"
+                    label="Mobile *"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="Phone Number"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues || ''}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                  <InputText
+                    type="Date"
+                    name="dob"
+                    label="Date of Birth *"
+                    placeholder="Enter Date of Birth"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputText
+                    name="nationality"
+                    label="Nationality *"
+                    type="text"
+                    placeholder="Nationality"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                  <SelectInput
+                    name="state"
+                    label="Select State *"
+                    placeholder="Select State"
+                    options={STATE_OPTIONS()}
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SelectInput
+                    name="district"
+                    label="Select District *"
+                    placeholder="Select District"
+                    options={DISTRICTS_OPTIONS(profileValues?.state ?? "")}
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                  <InputText
+                    name="city"
+                    label="City *"
+                    placeholder="Enter City"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputText
+                    name="pin_code"
+                    label="Pin Code *"
+                    placeholder="Enter Pin Code"
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                  <SelectInput
+                    name="language"
+                    label="Select Mother tongue*"
+                    placeholder="Select Mother tongue"
+                    options={OPTIONS.LANG}
+                    onChange={isProfileLocked ? undefined : handleProfileChange}
+                    error={isProfileLocked ? {} : profileErros}
+                    value={profileValues}
+                    disabled={isProfileLocked}
+                    readOnly={isProfileLocked}
+                  />
+                </div>
+                
+                {!isProfileLocked && (
+                  <Btn
+                    title="Save Changes"
+                    type="button"
+                    onClick={handleProfileSubmit}
+                    className="w-full px-6 py-3 mt-4"
+                    isLoading={uploading}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Bank Information */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
+              <div className="flex items-center">
+                <CreditCard className="w-5 h-5 text-green-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Bank Information</h3>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Update your bank details and information</p>
+            </div>
+            
+            <div className="p-6">
+              {isBankLocked && (
+                <div className="text-sm text-yellow-600 bg-yellow-50 px-4 py-3 rounded-lg mb-4 flex items-center">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Your bank details have been locked and cannot be edited. Please contact support if you need to make changes.
+                </div>
+              )}
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputText
+                    name="acc_no"
+                    label="Account Number *"
+                    placeholder="Enter Account Number"
+                    onChange={isBankLocked ? undefined : handleBankChange}
+                    error={isBankLocked ? {} : bankErros}
+                    value={bankValues}
+                    disabled={isBankLocked}
+                    readOnly={isBankLocked}
+                  />
+                  <InputText
+                    name="acc_name"
+                    label="Account Name *"
+                    placeholder="Enter Account Name"
+                    onChange={isBankLocked ? undefined : handleBankChange}
+                    error={isBankLocked ? {} : bankErros}
+                    value={bankValues}
+                    disabled={isBankLocked}
+                    readOnly={isBankLocked}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputText
+                    name="bank_name"
+                    label="Bank Name *"
+                    type="text"
+                    placeholder="Enter Bank Name"
+                    onChange={isBankLocked ? undefined : handleBankChange}
+                    error={isBankLocked ? {} : bankErros}
+                    value={bankValues}
+                    disabled={isBankLocked}
+                    readOnly={isBankLocked}
+                  />
+                  <InputText
+                    type="text"
+                    name="ifsc_code"
+                    label="IFSC Code *"
+                    placeholder="Enter IFSC Code"
+                    onChange={isBankLocked ? undefined : handleBankChange}
+                    error={isBankLocked ? {} : bankErros}
+                    value={bankValues}
+                    disabled={isBankLocked}
+                    readOnly={isBankLocked}
+                  />
+                </div>
+                
+                <InputText
+                  name="branch_name"
+                  label="Branch Name *"
+                  type="text"
+                  placeholder="Enter Branch Name"
+                  onChange={isBankLocked ? undefined : handleBankChange}
+                  error={isBankLocked ? {} : bankErros}
+                  value={bankValues}
+                  disabled={isBankLocked}
+                  readOnly={isBankLocked}
+                />
+                
+                {!isBankLocked && (
+                  <Btn
+                    title="Save Changes"
+                    type="button"
+                    onClick={handleBankSubmit}
+                    className="w-full px-6 py-3 mt-4"
+                    isLoading={uploading}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Security Settings */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-100">
+              <div className="flex items-center">
+                <Lock className="w-5 h-5 text-purple-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Security</h3>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Manage your password and security preferences</p>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <PasswordInput
+                name="current_password"
+                label="Current Password *"
+                placeholder="Enter Current Password"
+                value={passwordValues}
+                onChange={handleChangePassword}
+                error={passwordErrors}
+              />
+              
+              <PasswordInput
+                name="new_password"
+                label="New Password *"
+                placeholder="Enter New Password"
+                value={passwordValues}
+                onChange={handleChangePassword}
+                error={passwordErrors}
+              />
+              
+              <PasswordInput
+                name="password_confirmation"
+                label="Confirm Password *"
+                placeholder="Enter Confirm Password"
+                value={passwordValues}
+                onChange={handleChangePassword}
+                error={passwordErrors}
+              />
+              
+              <Btn
+                title="Update Password"
+                onClick={handlePasswordSubmit}
+                className="w-full px-6 py-3"
+                isLoading={passwordUploadingLoading}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 };
+
 export default Profile;

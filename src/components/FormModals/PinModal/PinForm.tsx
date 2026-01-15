@@ -5,6 +5,7 @@ import InputText from "@/components/ui/InputText";
 import Btn from "@/components/ui/Btn";
 import { OPTIONS } from "@/constants/others";
 import SelectInput from "@/components/ui/SelectInput";
+import { Info, Crown, AlertCircle } from "lucide-react";
 
 export const VALIDATION_SCHEMA = Yup.object().shape({
   level: Yup.string().required("Required Upgrade Level*"),
@@ -89,46 +90,81 @@ const PinForm = ({
   }, [RequestError, setErrors]);
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <InputText
-        name="current_level"
-        label="Current Level *"
-        placeholder="Trainee"
-        onChange={handleChange}
-        error={errors}
-        value={{ current_level: displayCurrentLevel }}
-        disabled
-        readOnly
-      />
-      <SelectInput
-        name="level"
-        label="Upgrade to Level *"
-        placeholder={
-          isMaxLevel ? "Maximum level reached" : "Select Upgrade Level"
-        }
-        options={availableOptions}
-        onChange={handleChange}
-        error={errors}
-        value={values}
-        disabled={isMaxLevel}
-      />
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">Important Notes:</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Pin requests are reviewed by admin</li>
-          <li>• Approval may take 1-3 business days</li>
-          <li>• You'll be notified when your pin is ready</li>
-          <li>• Activation requires additional information</li>
-        </ul>
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Current Level Card */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <div className="flex items-center">
+          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-4">
+            <Crown className="w-6 h-6 text-blue-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-blue-600 font-medium">Current Level</p>
+            <p className="text-xl font-bold text-blue-900">{displayCurrentLevel}</p>
+          </div>
+        </div>
       </div>
-      <div className="flex justify-end space-x-3 pt-4">
-        <Btn title="Cancel" onClick={onCloseModal} uiType="secondary" />
-        <Btn
-          title={"Submit Request"}
-          isLoading={loading}
-          onClick={handleSubmit}
-          isDisable={isMaxLevel}
+
+      {/* Upgrade Level Select */}
+      <div>
+        <SelectInput
+          name="level"
+          label="Upgrade to Level *"
+          placeholder={
+            isMaxLevel ? "Maximum level reached" : "Select Upgrade Level"
+          }
+          options={availableOptions}
+          onChange={handleChange}
+          error={errors}
+          value={values}
+          disabled={isMaxLevel}
         />
+        {isMaxLevel && (
+          <div className="mt-2 flex items-center text-amber-600 text-sm">
+            <AlertCircle className="w-4 h-4 mr-1" />
+            You have reached the maximum level
+          </div>
+        )}
+      </div>
+
+      {/* Important Notes */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="flex items-start">
+          <Info className="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-amber-900 mb-2">Important Notes:</h4>
+            <ul className="text-sm text-amber-800 space-y-1">
+              <li>• Pin requests are reviewed by admin</li>
+              <li>• Approval may take 1-3 business days</li>
+              <li>• You'll be notified when your pin is ready</li>
+              <li>• Activation requires additional information</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex space-x-3 pt-2">
+        <button
+          type="button"
+          onClick={onCloseModal}
+          className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading || isMaxLevel}
+          className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
+        >
+          {loading ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Submitting...
+            </div>
+          ) : (
+            "Submit Request"
+          )}
+        </button>
       </div>
     </form>
   );

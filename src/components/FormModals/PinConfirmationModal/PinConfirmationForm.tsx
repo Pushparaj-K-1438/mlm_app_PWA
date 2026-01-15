@@ -1,6 +1,7 @@
 import { useFormik } from "formik";
 import { useState } from "react";
 import Btn from "@/components/ui/Btn";
+import { FileText, Globe, CheckCircle, AlertCircle } from "lucide-react";
 
 const PinConfirmationForm = ({
   data = {},
@@ -39,31 +40,72 @@ const PinConfirmationForm = ({
   const currentContent = isTamil ? tamilContent : englishContent;
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium text-blue-900">Important Notes:</h4>
-              <button
-                type="button"
-                onClick={() => setIsTamil(!isTamil)}
-                className="text-sm px-3 py-1 bg-red-100 hover:bg-red-200 border border-red-500 text-red-800 rounded transition-colors"
-              >
-                {isTamil ? "English" : "தமிழ்"}
-              </button>
-            </div>
-            <ul className="text-sm text-blue-800 space-y-1">
-              {currentContent.map((item, index) => {
-                const isLastItem = index === currentContent.length - 1;
-                return (
-                  <li key={index}>
-                    • {isLastItem ? <b>{item}</b> : item}
-                  </li>
-                );
-              })}
-            </ul>
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      {/* Language Toggle */}
+      <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4 border border-blue-100">
+        <div className="flex items-center">
+          <FileText className="w-5 h-5 text-blue-600 mr-2" />
+          <h4 className="font-medium text-blue-900">Terms & Conditions</h4>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsTamil(!isTamil)}
+          className="flex items-center px-3 py-1.5 bg-white border border-blue-200 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+        >
+          <Globe className="w-4 h-4 mr-1" />
+          {isTamil ? "English" : "தமிழ்"}
+        </button>
+      </div>
+
+      {/* Terms Content */}
+      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 max-h-60 overflow-y-auto">
+        <ul className="text-sm text-gray-700 space-y-3">
+          {currentContent.map((item, index) => {
+            const isLastItem = index === currentContent.length - 1;
+            return (
+              <li key={index} className="flex items-start">
+                <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 mr-3 flex-shrink-0"></span>
+                <span className={isLastItem ? "font-semibold" : ""}>
+                  {item}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* Confirmation Message */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="flex items-start">
+          <AlertCircle className="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-amber-900 mb-1">Confirmation Required</h4>
+            <p className="text-sm text-amber-800">
+              By accepting these terms, you confirm that you have read and understood all the conditions mentioned above.
+            </p>
           </div>
-      <div className="flex justify-end space-x-3 pt-4">
-        <Btn title={"Accept"} isLoading={loading} onClick={handleSubmit} />
+        </div>
+      </div>
+
+      {/* Accept Button */}
+      <div className="pt-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 flex items-center justify-center"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Processing...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Accept Terms & Conditions
+            </>
+          )}
+        </button>
       </div>
     </form>
   );
