@@ -31,7 +31,7 @@ export default function DailyVideoWatch({
 }: DailyVideoWatchProps) {
   const { data, loading, setQuery } = useGetCall(SERVICE.DAILY_VIDEO_TODAY);
   const { Post: updateDVStatus } = useActionCall(
-    SERVICE.DAILY_VIDEO_STATUS_UPDATE
+    SERVICE.DAILY_VIDEO_STATUS_UPDATE,
   );
 
   const playerRef = useRef<any>(null);
@@ -203,12 +203,15 @@ export default function DailyVideoWatch({
           daily_video_id: data?.data?.id,
           watchedstatus: 1,
         },
-        ""
+        "",
       );
       // localStorage.setItem("refresh_start_time", Date.now().toString());
-      setTimeout(() => {
-        window.location.reload();
-      }, 10 * 60 * 1000);
+      setTimeout(
+        () => {
+          window.location.reload();
+        },
+        10 * 60 * 1000,
+      );
       window.open(data?.data?.youtube_link, "_blank");
     } else {
       setPlaying(true);
@@ -257,7 +260,7 @@ export default function DailyVideoWatch({
           daily_video_id: data?.data?.id,
           watchedstatus: 1,
         },
-        ""
+        "",
       );
     }
     setPlaying(false);
@@ -346,8 +349,8 @@ export default function DailyVideoWatch({
             </div>
           )}
 
-          {/* Controls Overlay */}
-          {showControls && (
+          {/* not need for mobile */}
+          {false && (
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
               {/* Top Controls */}
               <div className="flex justify-between items-center p-4 pointer-events-auto">

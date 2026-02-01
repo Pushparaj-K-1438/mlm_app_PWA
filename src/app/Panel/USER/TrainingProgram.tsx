@@ -35,7 +35,7 @@ import {
 
 const TrainingProgramWatch = () => {
   const { data, loading, setQuery, error } = useGetCall(
-    SERVICE.USER_TRAINING_CURRENCT
+    SERVICE.USER_TRAINING_CURRENCT,
   );
   const { Post: updateTraningStatus, error: traningStatusUpdateError } =
     useActionCall(SERVICE.TRAINING_STATUS_UPDATE);
@@ -66,6 +66,45 @@ const TrainingProgramWatch = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const handleTakeQuiz = () => {
+    Swal.fire({
+      icon: "info",
+      title: `Read Instructions`,
+      html: `
+        <ul>
+         <li>* Each question has 55 seconds to answer.</li>
+         <li>* Once submitted, you cannot return to previous questions.</li>
+         <li>* Unanswered questions after 55 seconds will auto-skip.</li>
+         <li>* No pausing or refreshing during the quiz.</li>
+        </ul>
+       `,
+      showCancelButton: true,
+      confirmButtonText: "Take Quiz in English",
+      cancelButtonText: "Take Quiz in Tamil",
+      reverseButtons: true, // Puts the buttons in a specific order (optional)
+      customClass: {
+        confirmButton:
+          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+        cancelButton:
+          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setTakeQuizLang(LANG.EN);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        setTakeQuizLang(LANG.TA);
+      }
+      setTakeQuiz(true);
+    });
+  };
+
+  useEffect(() => {
+    const quizeTaken = localStorage.getItem("training_video_quiz_taken");
+
+    if (quizeTaken) {
+      handleTakeQuiz();
+    }
+  }, []);
   // Handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -244,6 +283,21 @@ const TrainingProgramWatch = () => {
     );
   }
 
+  const handleRedirect = async (isYoutube = false) => {
+    if (isYoutube) {
+      localStorage.setItem("training_video_quiz_taken", "true");
+      setTimeout(
+        () => {
+          window.location.reload();
+        },
+        10 * 60 * 1000,
+      );
+      window.open(data?.data?.training?.training_video?.youtube_link, "_blank");
+    } else {
+      setPlaying(true);
+    }
+  };
+
   const handlevideoWatchCompleted = async () => {
     // if already watched not need to trigger
     if (!data?.data?.training?.status) {
@@ -263,42 +317,10 @@ const TrainingProgramWatch = () => {
         {
           status: data?.data?.training?.training_video?.quiz?.id ? 1 : 2,
         },
-        ""
+        "",
       );
     }
     setPlaying(false);
-  };
-
-  const handleTakeQuiz = () => {
-    Swal.fire({
-      icon: "info",
-      title: `Read Instructions`,
-      html: `
-        <ul>
-         <li>* Each question has 55 seconds to answer.</li>
-         <li>* Once submitted, you cannot return to previous questions.</li>
-         <li>* Unanswered questions after 55 seconds will auto-skip.</li>
-         <li>* No pausing or refreshing during the quiz.</li>
-        </ul>
-       `,
-      showCancelButton: true,
-      confirmButtonText: "Take Quiz in English",
-      cancelButtonText: "Take Quiz in Tamil",
-      reverseButtons: true, // Puts the buttons in a specific order (optional)
-      customClass: {
-        confirmButton:
-          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-        cancelButton:
-          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setTakeQuizLang(LANG.EN);
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        setTakeQuizLang(LANG.TA);
-      }
-      setTakeQuiz(true);
-    });
   };
 
   const handleQuizSubmit = async (payload = []) => {
@@ -308,7 +330,7 @@ const TrainingProgramWatch = () => {
       text: `Thank you for completing the quiz. ${Lib.checkQuizCorrect(
         data?.data?.training?.training_video?.quiz?.questions,
         payload,
-        takeQuizLang
+        takeQuizLang,
       )}, and your responses have been submitted successfully.`,
       confirmButtonText: "OK",
       customClass: {
@@ -323,8 +345,9 @@ const TrainingProgramWatch = () => {
       {
         status: 2,
       },
-      ""
+      "",
     );
+    localStorage.removeItem("training_video_quiz_taken");
   };
 
   return (
@@ -336,7 +359,7 @@ const TrainingProgramWatch = () => {
           }`}
           quizQuestion={Lib.transformQuestionsFromResponse(
             data?.data?.training?.training_video?.quiz?.questions,
-            takeQuizLang
+            takeQuizLang,
           )}
           handleQuizSubmit={handleQuizSubmit}
         />
@@ -453,7 +476,7 @@ const TrainingProgramWatch = () => {
                   src={
                     data?.data?.training?.training_video?.video_path
                       ? Lib.CloudPath(
-                          data?.data?.training?.training_video?.video_path
+                          data?.data?.training?.training_video?.video_path,
                         )
                       : data?.data?.training?.training_video?.youtube_link
                   }
@@ -486,7 +509,12 @@ const TrainingProgramWatch = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPlaying(true);
+                        // setPlaying(true);
+                        handleRedirect(
+                          Boolean(
+                            data?.data?.training?.training_video?.youtube_link,
+                          ),
+                        );
                       }}
                       className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
                     >
@@ -496,7 +524,7 @@ const TrainingProgramWatch = () => {
                 )}
 
               {/* Controls Overlay */}
-              {showControls && (
+              {false && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">
