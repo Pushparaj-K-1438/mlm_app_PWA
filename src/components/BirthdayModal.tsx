@@ -14,9 +14,13 @@ import { SERVICE } from "@/constants/services";
 const BirthdayModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState("");
-  const { data: profileData, loading } = useGetCall(SERVICE.GET_PROFILE);
+  // Use query with timestamp to bypass PWA cache
+  const { data: profileData, loading } = useGetCall(SERVICE.GET_PROFILE, {
+    query: { _t: Date.now() }, // Cache busting for PWA
+  });
 
   useEffect(() => {
+    console.log('BirthdayModal: loading=', loading, 'profileData=', profileData);
     if (loading || !profileData?.data) return;
 
     const userDob = profileData?.data?.dob;
