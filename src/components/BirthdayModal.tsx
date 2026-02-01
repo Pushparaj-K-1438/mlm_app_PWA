@@ -14,9 +14,7 @@ import { SERVICE } from "@/constants/services";
 const BirthdayModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState("");
-  const { data: profileData, loading } = useGetCall(SERVICE.GET_PROFILE, {
-    avoidFetch: true,
-  });
+  const { data: profileData, loading } = useGetCall(SERVICE.GET_PROFILE);
 
   useEffect(() => {
     if (loading || !profileData?.data) return;
