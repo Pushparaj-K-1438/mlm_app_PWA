@@ -41,7 +41,7 @@ import {
 
 function PromotionVideosPage() {
   const { data, loading, setQuery, error } = useGetCall(
-    SERVICE.GET_PROMOTION_VIDEO
+    SERVICE.GET_PROMOTION_VIDEO,
   );
   const { data: userInfo } = useGetCall(SERVICE.GET_PROFILE);
   const {
@@ -75,11 +75,51 @@ function PromotionVideosPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleTakeQuiz = () => {
+    Swal.fire({
+      icon: "info",
+      title: `Read Instructions`,
+      html: `
+     <ul>
+      <li>* Each question has 55 seconds to answer.</li>
+      <li>* Once submitted, you cannot return to previous questions.</li>
+      <li>* Unanswered questions after 55 seconds will auto-skip.</li>
+      <li>* No pausing or refreshing during the quiz.</li>
+     </ul>
+    `,
+      showCancelButton: true,
+      confirmButtonText: "Take Quiz in English",
+      cancelButtonText: "Take Quiz in Tamil",
+      reverseButtons: true, // Puts the buttons in a specific order (optional)
+      customClass: {
+        confirmButton:
+          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+        cancelButton:
+          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setTakeQuizLang(LANG.EN);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        setTakeQuizLang(LANG.TA);
+      }
+      setTakeQuiz(true);
+    });
+  };
+
+  useEffect(() => {
+    const quizeTaken = localStorage.getItem("promotion_video_quiz_taken");
+
+    if (quizeTaken) {
+      handleTakeQuiz();
+    }
   }, []);
 
   // Handle fullscreen change
@@ -89,11 +129,11 @@ function PromotionVideosPage() {
         setIsFullscreen(false);
       }
     };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -103,14 +143,14 @@ function PromotionVideosPage() {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     } else {
       setShowControls(true);
     }
-    
+
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
@@ -166,7 +206,7 @@ function PromotionVideosPage() {
           setIsFullscreen(true);
         }
       } catch (error) {
-        console.error('Error attempting to enable fullscreen:', error);
+        console.error("Error attempting to enable fullscreen:", error);
       }
     } else {
       try {
@@ -181,7 +221,7 @@ function PromotionVideosPage() {
         }
         setIsFullscreen(false);
       } catch (error) {
-        console.error('Error attempting to exit fullscreen:', error);
+        console.error("Error attempting to exit fullscreen:", error);
       }
     }
   };
@@ -197,6 +237,21 @@ function PromotionVideosPage() {
   const handleVideoContainerClick = () => {
     if (playing) {
       setShowControls(!showControls);
+    }
+  };
+
+  const handleRedirect = async (isYoutube = false) => {
+    if (isYoutube) {
+      localStorage.setItem("promotion_video_quiz_taken", "true");
+      setTimeout(
+        () => {
+          window.location.reload();
+        },
+        10 * 60 * 1000,
+      );
+      window.open(data?.data?.promotion_video?.youtube_link, "_blank");
+    } else {
+      setPlaying(true);
     }
   };
 
@@ -263,38 +318,6 @@ function PromotionVideosPage() {
     setPlaying(false);
   };
 
-  const handleTakeQuiz = () => {
-    Swal.fire({
-      icon: "info",
-      title: `Read Instructions`,
-      html: `
-     <ul>
-      <li>* Each question has 55 seconds to answer.</li>
-      <li>* Once submitted, you cannot return to previous questions.</li>
-      <li>* Unanswered questions after 55 seconds will auto-skip.</li>
-      <li>* No pausing or refreshing during the quiz.</li>
-     </ul>
-    `,
-      showCancelButton: true,
-      confirmButtonText: "Take Quiz in English",
-      cancelButtonText: "Take Quiz in Tamil",
-      reverseButtons: true, // Puts the buttons in a specific order (optional)
-      customClass: {
-        confirmButton:
-          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-        cancelButton:
-          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setTakeQuizLang(LANG.EN);
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        setTakeQuizLang(LANG.TA);
-      }
-      setTakeQuiz(true);
-    });
-  };
-
   const handleQuizSubmit = async (payload = []) => {
     let formPayload = {
       promotion_video_id: data?.data?.promotion_video?.id,
@@ -322,6 +345,7 @@ function PromotionVideosPage() {
           setTakeQuiz(false);
         }
       });
+      localStorage.removeItem("promotion_video_quiz_taken");
     }
   };
 
@@ -333,7 +357,7 @@ function PromotionVideosPage() {
       Swal.fire(
         "Completed!",
         "Thank you for taking the quiz! Your participation is appreciated.",
-        "success"
+        "success",
       );
       setQuery();
       setTakeQuiz(false);
@@ -347,7 +371,7 @@ function PromotionVideosPage() {
           title={`${data?.data?.promotion_video?.title}`}
           quizQuestion={Lib.transformQuestionsFromResponse(
             data?.data?.promotion_video?.quiz?.questions,
-            takeQuizLang
+            takeQuizLang,
           )}
           handleQuizSubmit={handleQuizSubmit}
         />
@@ -366,7 +390,9 @@ function PromotionVideosPage() {
           {/* Level Benefits */}
           <div className="px-6 mt-6">
             <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
-              <h3 className="text-lg font-semibold mb-4">Your Level Benefits</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Your Level Benefits
+              </h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                   <div className="flex flex-col items-center justify-center">
@@ -396,13 +422,13 @@ function PromotionVideosPage() {
           </div>
 
           {/* Video Player Section */}
-          <div 
-            className="bg-black mx-6 mt-6 rounded-2xl overflow-hidden"
+          <div
+            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
-            <div 
-              className={`${isFullscreen ? 'h-screen' : 'aspect-video'} bg-gray-900 relative`}
+            <div
+              className={`${isFullscreen ? "h-screen" : "aspect-video"} bg-gray-900 relative`}
               {...videoContainerProps}
             >
               {data?.data?.promotion_video?.video_path ||
@@ -420,6 +446,9 @@ function PromotionVideosPage() {
                   playing={playing}
                   onTimeUpdate={handleProgress}
                   onDurationChange={handleDurationChange}
+                  muted={isMuted}
+                  playsinline
+                  config={getVideoPlayerConfig()}
                   onEnded={handlevideoWatchCompleted}
                   onError={(error) => {
                     console.error("ReactPlayer Error:", error);
@@ -440,7 +469,10 @@ function PromotionVideosPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPlaying(true);
+                        // setPlaying(true);
+                        handleRedirect(
+                          Boolean(data?.data?.promotion_video?.youtube_link),
+                        );
                       }}
                       className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
                     >
@@ -450,7 +482,7 @@ function PromotionVideosPage() {
                 )}
 
               {/* Controls Overlay */}
-              {showControls && (
+              {false && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">
@@ -560,19 +592,29 @@ function PromotionVideosPage() {
                 <ul className="space-y-3 text-blue-800">
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Watch the promotional video completely to unlock the quiz</span>
+                    <span>
+                      Watch the promotional video completely to unlock the quiz
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Complete the quiz to earn rewards based on your performance</span>
+                    <span>
+                      Complete the quiz to earn rewards based on your
+                      performance
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>You have one retry option if you're not satisfied with your score</span>
+                    <span>
+                      You have one retry option if you're not satisfied with
+                      your score
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Tap the screen to show/hide controls while playing</span>
+                    <span>
+                      Tap the screen to show/hide controls while playing
+                    </span>
                   </li>
                 </ul>
               </div>

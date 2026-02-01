@@ -46,6 +46,12 @@ const ScratchCard = Loadable(
 const ContactUs = Loadable(
   lazy(() => import("@/app/Panel/USER/ContactUs"))
 );
+const Repurchase = Loadable(
+  lazy(() => import("@/app/Panel/USER/Repurchase"))
+);
+const SBILife = Loadable(
+  lazy(() => import("@/app/Panel/USER/SBILife"))
+);
 
 // Lazy-loaded Admin components
 const AdminDashboard = Loadable(
@@ -187,6 +193,14 @@ export default function MobileRoutes(): React.ReactElement | null {
       {
         path: "portal/user/contact-us",
         element: <ContactUs />,
+      },
+      {
+        path: "portal/user/repurchase",
+        element: <Repurchase />,
+      },
+      {
+        path: "portal/user/sbi-life",
+        element: <SBILife />,
       },
       {
         path: "*",

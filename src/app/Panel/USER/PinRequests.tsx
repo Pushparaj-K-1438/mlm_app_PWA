@@ -136,9 +136,9 @@ function PinRequestsPage() {
       </div>
 
       {/* Current Level Card */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+          <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
             <div className="flex items-center">
               <Crown className="w-5 h-5 text-blue-600 mr-2" />
               <h3 className="text-lg font-semibold text-gray-900">Current Level</h3>
@@ -165,9 +165,9 @@ function PinRequestsPage() {
       </div>
 
       {/* Available Upgrades */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
+          <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
             <div className="flex items-center">
               <ArrowUp className="w-5 h-5 text-green-600 mr-2" />
               <h3 className="text-lg font-semibold text-gray-900">Available Upgrades</h3>
@@ -327,9 +327,9 @@ function PinRequestsPage() {
       )}
 
       {/* Pin Request History */}
-      <div className="px-6 mt-6 mb-6">
+      <div className="px-4 sm:px-6 mt-6 mb-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-100">
+          <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900">Request History</h3>
           </div>
           <div className="p-6">

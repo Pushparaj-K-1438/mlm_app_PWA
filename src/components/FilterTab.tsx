@@ -64,7 +64,7 @@ const FilterTab = ({ filter, setFilter, TABLE_FILTER }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Filter Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center">
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -86,7 +86,7 @@ const FilterTab = ({ filter, setFilter, TABLE_FILTER }) => {
       </div>
 
       {/* Search Bar (Always Visible) */}
-      <div className="px-6 py-4 border-b border-gray-100">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -121,7 +121,7 @@ const FilterTab = ({ filter, setFilter, TABLE_FILTER }) => {
 
       {/* Additional Filters (Collapsible) */}
       {showFilters && (
-        <div className="px-6 py-4">
+        <div className="px-4 sm:px-6 py-4">
           <div className="grid grid-cols-1 gap-4">
             {TABLE_FILTER.filter(field => field !== "SEARCH").map((fields) => {
               switch (FILTER_FIELD[fields].type) {

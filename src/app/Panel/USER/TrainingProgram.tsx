@@ -28,11 +28,14 @@ import QuizForm from "@/components/QuizeForm";
 import Lib from "@/utils/Lib";
 import Error500 from "@/components/ui/Error500";
 import { LANG } from "@/constants/others";
-import { getVideoPlayerConfig, videoContainerProps } from "@/utils/videoPlayerConfig";
+import {
+  getVideoPlayerConfig,
+  videoContainerProps,
+} from "@/utils/videoPlayerConfig";
 
 const TrainingProgramWatch = () => {
   const { data, loading, setQuery, error } = useGetCall(
-    SERVICE.USER_TRAINING_CURRENCT
+    SERVICE.USER_TRAINING_CURRENCT,
   );
   const { Post: updateTraningStatus, error: traningStatusUpdateError } =
     useActionCall(SERVICE.TRAINING_STATUS_UPDATE);
@@ -56,13 +59,52 @@ const TrainingProgramWatch = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const handleTakeQuiz = () => {
+    Swal.fire({
+      icon: "info",
+      title: `Read Instructions`,
+      html: `
+        <ul>
+         <li>* Each question has 55 seconds to answer.</li>
+         <li>* Once submitted, you cannot return to previous questions.</li>
+         <li>* Unanswered questions after 55 seconds will auto-skip.</li>
+         <li>* No pausing or refreshing during the quiz.</li>
+        </ul>
+       `,
+      showCancelButton: true,
+      confirmButtonText: "Take Quiz in English",
+      cancelButtonText: "Take Quiz in Tamil",
+      reverseButtons: true, // Puts the buttons in a specific order (optional)
+      customClass: {
+        confirmButton:
+          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+        cancelButton:
+          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setTakeQuizLang(LANG.EN);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        setTakeQuizLang(LANG.TA);
+      }
+      setTakeQuiz(true);
+    });
+  };
+
+  useEffect(() => {
+    const quizeTaken = localStorage.getItem("training_video_quiz_taken");
+
+    if (quizeTaken) {
+      handleTakeQuiz();
+    }
+  }, []);
   // Handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -70,11 +112,11 @@ const TrainingProgramWatch = () => {
         setIsFullscreen(false);
       }
     };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -84,14 +126,14 @@ const TrainingProgramWatch = () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     } else {
       setShowControls(true);
     }
-    
+
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
@@ -147,7 +189,7 @@ const TrainingProgramWatch = () => {
           setIsFullscreen(true);
         }
       } catch (error) {
-        console.error('Error attempting to enable fullscreen:', error);
+        console.error("Error attempting to enable fullscreen:", error);
       }
     } else {
       try {
@@ -162,7 +204,7 @@ const TrainingProgramWatch = () => {
         }
         setIsFullscreen(false);
       } catch (error) {
-        console.error('Error attempting to exit fullscreen:', error);
+        console.error("Error attempting to exit fullscreen:", error);
       }
     }
   };
@@ -241,6 +283,21 @@ const TrainingProgramWatch = () => {
     );
   }
 
+  const handleRedirect = async (isYoutube = false) => {
+    if (isYoutube) {
+      localStorage.setItem("training_video_quiz_taken", "true");
+      setTimeout(
+        () => {
+          window.location.reload();
+        },
+        10 * 60 * 1000,
+      );
+      window.open(data?.data?.training?.training_video?.youtube_link, "_blank");
+    } else {
+      setPlaying(true);
+    }
+  };
+
   const handlevideoWatchCompleted = async () => {
     // if already watched not need to trigger
     if (!data?.data?.training?.status) {
@@ -260,42 +317,10 @@ const TrainingProgramWatch = () => {
         {
           status: data?.data?.training?.training_video?.quiz?.id ? 1 : 2,
         },
-        ""
+        "",
       );
     }
     setPlaying(false);
-  };
-
-  const handleTakeQuiz = () => {
-    Swal.fire({
-      icon: "info",
-      title: `Read Instructions`,
-      html: `
-        <ul>
-         <li>* Each question has 55 seconds to answer.</li>
-         <li>* Once submitted, you cannot return to previous questions.</li>
-         <li>* Unanswered questions after 55 seconds will auto-skip.</li>
-         <li>* No pausing or refreshing during the quiz.</li>
-        </ul>
-       `,
-      showCancelButton: true,
-      confirmButtonText: "Take Quiz in English",
-      cancelButtonText: "Take Quiz in Tamil",
-      reverseButtons: true, // Puts the buttons in a specific order (optional)
-      customClass: {
-        confirmButton:
-          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-        cancelButton:
-          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setTakeQuizLang(LANG.EN);
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        setTakeQuizLang(LANG.TA);
-      }
-      setTakeQuiz(true);
-    });
   };
 
   const handleQuizSubmit = async (payload = []) => {
@@ -305,7 +330,7 @@ const TrainingProgramWatch = () => {
       text: `Thank you for completing the quiz. ${Lib.checkQuizCorrect(
         data?.data?.training?.training_video?.quiz?.questions,
         payload,
-        takeQuizLang
+        takeQuizLang,
       )}, and your responses have been submitted successfully.`,
       confirmButtonText: "OK",
       customClass: {
@@ -320,8 +345,9 @@ const TrainingProgramWatch = () => {
       {
         status: 2,
       },
-      ""
+      "",
     );
+    localStorage.removeItem("training_video_quiz_taken");
   };
 
   return (
@@ -333,7 +359,7 @@ const TrainingProgramWatch = () => {
           }`}
           quizQuestion={Lib.transformQuestionsFromResponse(
             data?.data?.training?.training_video?.quiz?.questions,
-            takeQuizLang
+            takeQuizLang,
           )}
           handleQuizSubmit={handleQuizSubmit}
         />
@@ -359,7 +385,7 @@ const TrainingProgramWatch = () => {
               <div
                 className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
                 style={{
-                  width: `${((data?.data?.training?.day) / 7) * 100}%`,
+                  width: `${(data?.data?.training?.day / 7) * 100}%`,
                 }}
               ></div>
             </div>
@@ -377,38 +403,54 @@ const TrainingProgramWatch = () => {
                     <BookOpen className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-blue-600">Days 1</div>
-                    <div className="text-gray-900 font-medium">Welcome Video</div>
+                    <div className="text-sm font-medium text-blue-600">
+                      Days 1
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      Welcome Video
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center p-3 bg-green-50 rounded-xl">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <Target className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-green-600">Days 2-3</div>
-                    <div className="text-gray-900 font-medium">Company Plan Video</div>
+                    <div className="text-sm font-medium text-green-600">
+                      Days 2-3
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      Company Plan Video
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center p-3 bg-purple-50 rounded-xl">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                     <Award className="w-5 h-5 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-purple-600">Days 4-5</div>
-                    <div className="text-gray-900 font-medium">How Work Video</div>
+                    <div className="text-sm font-medium text-purple-600">
+                      Days 4-5
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      How Work Video
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center p-3 bg-orange-50 rounded-xl">
                   <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
                     <Play className="w-5 h-5 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-orange-600">Days 6-7</div>
-                    <div className="text-gray-900 font-medium">Demo Working</div>
+                    <div className="text-sm font-medium text-orange-600">
+                      Days 6-7
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      Demo Working
+                    </div>
                   </div>
                 </div>
               </div>
@@ -416,13 +458,15 @@ const TrainingProgramWatch = () => {
           </div>
 
           {/* Video Player Section */}
-          <div 
-            className="bg-black mx-6 mt-6 rounded-2xl overflow-hidden"
+          <div
+            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
-            <div 
-              className={`${isFullscreen ? 'h-screen' : 'aspect-video'} bg-gray-900 relative`}
+            <div
+              className={`${
+                isFullscreen ? "h-screen" : "aspect-video"
+              } bg-gray-900 relative`}
               {...videoContainerProps}
             >
               {data?.data?.training?.training_video?.video_path ||
@@ -432,7 +476,7 @@ const TrainingProgramWatch = () => {
                   src={
                     data?.data?.training?.training_video?.video_path
                       ? Lib.CloudPath(
-                          data?.data?.training?.training_video?.video_path
+                          data?.data?.training?.training_video?.video_path,
                         )
                       : data?.data?.training?.training_video?.youtube_link
                   }
@@ -442,6 +486,9 @@ const TrainingProgramWatch = () => {
                   playing={playing}
                   onTimeUpdate={handleProgress}
                   onDurationChange={handleDurationChange}
+                  muted={isMuted}
+                  playsinline
+                  config={getVideoPlayerConfig()}
                   onEnded={handlevideoWatchCompleted}
                   onError={(error) => {
                     console.error("ReactPlayer Error:", error);
@@ -462,7 +509,12 @@ const TrainingProgramWatch = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPlaying(true);
+                        // setPlaying(true);
+                        handleRedirect(
+                          Boolean(
+                            data?.data?.training?.training_video?.youtube_link,
+                          ),
+                        );
                       }}
                       className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
                     >
@@ -472,12 +524,14 @@ const TrainingProgramWatch = () => {
                 )}
 
               {/* Controls Overlay */}
-              {showControls && (
+              {false && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">
                     <div className="text-white">
-                      <h3 className="font-medium">Day {data?.data?.training?.day} Training</h3>
+                      <h3 className="font-medium">
+                        Day {data?.data?.training?.day} Training
+                      </h3>
                     </div>
                     <div className="flex space-x-2">
                       <button
@@ -573,7 +627,7 @@ const TrainingProgramWatch = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <p className="text-gray-600 mb-4">
                   {data?.data?.training?.training_video?.description}
                 </p>
@@ -601,19 +655,30 @@ const TrainingProgramWatch = () => {
                 <ul className="space-y-3 text-blue-800">
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>You must watch the daily information video completely before accessing other features</span>
+                    <span>
+                      You must watch the daily information video completely
+                      before accessing other features
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>The video contains important updates and information for your daily activities</span>
+                    <span>
+                      The video contains important updates and information for
+                      your daily activities
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Once completed, you'll have full access to training, promotion videos, and other features</span>
+                    <span>
+                      Once completed, you'll have full access to training,
+                      promotion videos, and other features
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Tap the screen to show/hide controls while playing</span>
+                    <span>
+                      Tap the screen to show/hide controls while playing
+                    </span>
                   </li>
                 </ul>
               </div>

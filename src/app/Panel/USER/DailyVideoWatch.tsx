@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, CheckCircle, Clock, Calendar, AlertCircle, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import {
+  Play,
+  CheckCircle,
+  Clock,
+  Calendar,
+  AlertCircle,
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { useActionCall, useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
@@ -7,7 +17,10 @@ import ReactPlayer from "react-player";
 import UIHelpers from "@/utils/UIhelper";
 import Swal from "sweetalert2";
 import Lib from "@/utils/Lib";
-import { getVideoPlayerConfig, videoContainerProps } from "@/utils/videoPlayerConfig";
+import {
+  getVideoPlayerConfig,
+  videoContainerProps,
+} from "@/utils/videoPlayerConfig";
 
 interface DailyVideoWatchProps {
   onVideoWatched: () => void;
@@ -18,7 +31,7 @@ export default function DailyVideoWatch({
 }: DailyVideoWatchProps) {
   const { data, loading, setQuery } = useGetCall(SERVICE.DAILY_VIDEO_TODAY);
   const { Post: updateDVStatus } = useActionCall(
-    SERVICE.DAILY_VIDEO_STATUS_UPDATE
+    SERVICE.DAILY_VIDEO_STATUS_UPDATE,
   );
 
   const playerRef = useRef<any>(null);
@@ -38,11 +51,11 @@ export default function DailyVideoWatch({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Handle fullscreen change
@@ -52,11 +65,11 @@ export default function DailyVideoWatch({
         setIsFullscreen(false);
       }
     };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -66,14 +79,14 @@ export default function DailyVideoWatch({
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     } else {
       setShowControls(true);
     }
-    
+
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
@@ -129,7 +142,7 @@ export default function DailyVideoWatch({
           setIsFullscreen(true);
         }
       } catch (error) {
-        console.error('Error attempting to enable fullscreen:', error);
+        console.error("Error attempting to enable fullscreen:", error);
       }
     } else {
       try {
@@ -144,7 +157,7 @@ export default function DailyVideoWatch({
         }
         setIsFullscreen(false);
       } catch (error) {
-        console.error('Error attempting to exit fullscreen:', error);
+        console.error("Error attempting to exit fullscreen:", error);
       }
     }
   };
@@ -160,6 +173,48 @@ export default function DailyVideoWatch({
   const handleVideoContainerClick = () => {
     if (playing) {
       setShowControls(!showControls);
+    }
+  };
+
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     const startTime = localStorage.getItem("refresh_start_time");
+
+  //     if (!startTime) return;
+
+  //     const elapsed = Date.now() - Number(startTime);
+
+  //     if (elapsed >= 60 * 1000) {
+  //       // 1 minute
+  //       localStorage.removeItem("refresh_start_time");
+  //       clearInterval(interval);
+  //       window.location.reload();
+  //     }
+  //   }, 1000);
+
+  //   return () => clearInterval(interval);
+  // }, []);
+
+  // Handle redirect for YouTube links
+  const handleRedirect = async (isYoutube = false) => {
+    if (isYoutube) {
+      await updateDVStatus(
+        {
+          daily_video_id: data?.data?.id,
+          watchedstatus: 1,
+        },
+        "",
+      );
+      // localStorage.setItem("refresh_start_time", Date.now().toString());
+      setTimeout(
+        () => {
+          window.location.reload();
+        },
+        10 * 60 * 1000,
+      );
+      window.open(data?.data?.youtube_link, "_blank");
+    } else {
+      setPlaying(true);
     }
   };
 
@@ -205,7 +260,7 @@ export default function DailyVideoWatch({
           daily_video_id: data?.data?.id,
           watchedstatus: 1,
         },
-        ""
+        "",
       );
     }
     setPlaying(false);
@@ -234,13 +289,19 @@ export default function DailyVideoWatch({
       </div>
 
       {/* Video Player Section */}
-      <div 
-        className={`bg-black ${isFullscreen ? 'fixed inset-0 z-50' : 'relative mx-6 mt-6 rounded-2xl overflow-hidden'}`}
+      <div
+        className={`bg-black ${
+          isFullscreen
+            ? "fixed inset-0 z-50"
+            : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+        }`}
         ref={containerRef}
         onClick={handleVideoContainerClick}
       >
-        <div 
-          className={`${isFullscreen ? 'h-screen' : 'aspect-video'} bg-gray-900 relative`}
+        <div
+          className={`${
+            isFullscreen ? "h-screen" : "aspect-video"
+          } bg-gray-900 relative`}
           {...videoContainerProps}
         >
           {data?.data?.video_path || data?.data?.youtube_link ? (
@@ -257,9 +318,12 @@ export default function DailyVideoWatch({
               playing={playing}
               onTimeUpdate={handleProgress}
               onDurationChange={handleDurationChange}
+              muted={isMuted}
+              playsinline
+              config={getVideoPlayerConfig()}
               onEnded={handlevideoWatchCompleted}
               onError={(error) => {
-                console.error('ReactPlayer Error:', error);
+                console.error("ReactPlayer Error:", error);
                 // Handle video loading errors
               }}
             />
@@ -275,7 +339,8 @@ export default function DailyVideoWatch({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPlaying(true);
+                  handleRedirect(Boolean(data?.data?.youtube_link));
+                  // setPlaying(true);
                 }}
                 className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
               >
@@ -284,8 +349,8 @@ export default function DailyVideoWatch({
             </div>
           )}
 
-          {/* Controls Overlay */}
-          {showControls && (
+          {/* not need for mobile */}
+          {false && (
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
               {/* Top Controls */}
               <div className="flex justify-between items-center p-4 pointer-events-auto">
@@ -386,7 +451,7 @@ export default function DailyVideoWatch({
                 </div>
               )}
             </div>
-            
+
             <p className="text-gray-600 mb-4">{data?.data?.description}</p>
 
             <div className="flex items-center text-sm text-gray-500">
@@ -407,15 +472,24 @@ export default function DailyVideoWatch({
             <ul className="space-y-3 text-blue-800">
               <li className="flex items-start">
                 <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>You must watch the daily information video completely before accessing other features</span>
+                <span>
+                  You must watch the daily information video completely before
+                  accessing other features
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>The video contains important updates and information for your daily activities</span>
+                <span>
+                  The video contains important updates and information for your
+                  daily activities
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                <span>Once completed, you'll have full access to training, promotion videos, and other features</span>
+                <span>
+                  Once completed, you'll have full access to training, promotion
+                  videos, and other features
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>

@@ -85,7 +85,7 @@ const QuizForm = ({
 
   if (!currentQuestion)
     return (
-      <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20 flex items-center justify-center px-6">
+      <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20 flex items-center justify-center px-4 sm:px-6">
         <div className="text-center">
           <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
             <Clock className="w-8 h-8 text-gray-400" />
@@ -98,7 +98,7 @@ const QuizForm = ({
   return (
     <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20">
       {/* Header with Progress */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 safe-area-inset-top">
         <div className="flex justify-between items-center mb-3">
           <h1 className="text-xl font-bold text-gray-900">{title}</h1>
           <div className="flex items-center bg-blue-50 px-3 py-1 rounded-full">
@@ -116,7 +116,7 @@ const QuizForm = ({
       </div>
 
       {/* Question Card */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Question Header with Timer */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
@@ -196,11 +196,11 @@ const QuizForm = ({
       </div>
 
       {/* Submit Button */}
-      <div className="px-6 mt-6 mb-6">
+      <div className="px-4 sm:px-6 mt-6 mb-6">
         <button
           onClick={onSubmit}
           disabled={isSubmitting}
-          className={`w-full flex items-center justify-center px-6 py-4 rounded-xl font-semibold shadow-md transition-all transform active:scale-95 ${
+          className={`w-full flex items-center justify-center px-4 sm:px-6 py-4 rounded-xl font-semibold shadow-md transition-all transform active:scale-95 ${
             isSubmitting
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
@@ -223,7 +223,7 @@ const QuizForm = ({
       </div>
 
       {/* Instructions */}
-      <div className="px-6 mb-6">
+      <div className="px-4 sm:px-6 mb-6">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start">
             <AlertCircle className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />

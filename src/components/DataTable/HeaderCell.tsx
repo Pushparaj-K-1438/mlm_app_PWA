@@ -60,7 +60,7 @@ export function HeaderCell({
   return (
     <div
       className={Lib.cn(
-        "flex items-center gap-2 py-2",
+        "flex items-center gap-2",
         sortable && "cursor-pointer hover:bg-gray-50 transition-colors",
         handleTextAlignment(align),
         className
@@ -72,7 +72,7 @@ export function HeaderCell({
       }}
     >
       <div
-        {...(ellipsis && { className: "truncate" })}
+        className={Lib.cn(ellipsis && "truncate", "min-w-0")}
         {...(width && { style: { width } })}
       >
         <span className="text-sm font-medium text-gray-900">{title}</span>

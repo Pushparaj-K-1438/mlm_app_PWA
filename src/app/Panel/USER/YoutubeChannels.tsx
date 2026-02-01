@@ -61,7 +61,7 @@ const YoutubeChannelsPage = () => {
         <div className="grid grid-cols-1 gap-4">
           <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl p-6 text-white">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-2">
                 <Youtube className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
@@ -75,7 +75,7 @@ const YoutubeChannelsPage = () => {
 
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 text-white">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-2">
                 <Users className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
@@ -89,7 +89,7 @@ const YoutubeChannelsPage = () => {
 
           <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-6 text-white">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-2">
                 <Play className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">

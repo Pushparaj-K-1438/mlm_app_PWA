@@ -29,6 +29,7 @@ import Header from "./Header/Header";
 import { useAuth } from "@/context/AuthContext";
 import { Outlet } from "react-router-dom";
 import DailyVideoFormModal from "@/components/FormModals/DailyVideoModal/DailyVideoFormModal";
+import BirthdayModal from "@/components/BirthdayModal";
 import { ROLE } from "@/constants/others";
 
 const roleLabels: Record<number, string> = {
@@ -86,7 +87,7 @@ const PortalLayout = () => {
       >
         {/* Header */}
         {headerVisible && (
-          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-6 sticky top-0 z-40">
+          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40">
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
@@ -196,6 +197,9 @@ const PortalLayout = () => {
           <Outlet context={{ sidebarCollapsed }} />
         </main>
       </div>
+
+      {/* Birthday Modal */}
+      <BirthdayModal />
     </div>
   );
 };

@@ -51,7 +51,7 @@ const PinConfirmationForm = ({ recoilApi = () => {} }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end justify-center safe-area-inset-bottom">
+    <div className="fixed inset-0 bottom-20 z-50 bg-black bg-opacity-50 flex items-end justify-center safe-area-inset-bottom">
       <div className="bg-white w-full max-w-lg rounded-t-3xl shadow-2xl animate-slide-up">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-3xl">
@@ -74,7 +74,7 @@ const PinConfirmationForm = ({ recoilApi = () => {} }) => {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
+        <div className="px-4 sm:px-6 py-6 max-h-[70vh] overflow-y-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">

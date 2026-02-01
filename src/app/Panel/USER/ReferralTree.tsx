@@ -294,7 +294,7 @@ function ReferralPage() {
             {/* Root Node (Current User) */}
             <div className="mb-6">
               <div className="flex items-center py-4 px-6 bg-gradient-to-r from-green-600 to-yellow-600 text-white rounded-2xl">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-2">
                   <Crown className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
@@ -309,7 +309,7 @@ function ReferralPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="px-2 py-1 text-xs font-medium bg-white/20 backdrop-blur-sm rounded-full">
+                  <span className="px-2 py-1 text-xs font-medium bg-white/20 backdrop-blur-sm rounded-full whitespace-nowrap">
                     {getLevelName(userDashboardData?.data?.current_promoter_level)}
                   </span>
                 </div>
@@ -348,7 +348,7 @@ function ReferralPage() {
 
                         <div className="text-right">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelColor(
+                            className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getLevelColor(
                               referalUser?.current_promoter_level
                             )}`}
                           >

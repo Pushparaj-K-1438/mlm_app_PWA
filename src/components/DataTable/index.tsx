@@ -13,6 +13,7 @@ const DataTable = ({
   sortDir = "",
   sortBy = "",
   setPageSize = () => {},
+  showMobileView = false,
 }: any) => {
   const getColumns = (parttenArg: any): any => {
     let col: any = [];
@@ -33,6 +34,8 @@ const DataTable = ({
         dataIndex: element?.key ?? "name",
         key: element?.key ?? "name",
         render: element?.render,
+        width: element?.width,
+        align: element?.align ?? "left",
       });
     });
     return col;
@@ -63,7 +66,7 @@ const DataTable = ({
       onPageChange={onPageChange}
       isLoading={isLoading}
       setPageSize={setPageSize}
-      showMobileView={true}
+      showMobileView={showMobileView}
     />
   );
 };
