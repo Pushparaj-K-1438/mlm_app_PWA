@@ -21,6 +21,8 @@ import {
   BanknoteArrowUp,
   GitPullRequestCreateArrow,
   Phone,
+  ShoppingCart,
+  Shield,
 } from "lucide-react";
 import { ROLE } from "@/constants/others";
 import { Button } from "@/components/ui/button";
@@ -188,6 +190,20 @@ const Sidebar = ({
           path: "/portal/user/scratch-card",
           icon: CreditCard,
           color: "from-sky-500 to-blue-600",
+        },
+        {
+          id: "repurchase",
+          label: "Continuity Purchase",
+          path: "/portal/user/repurchase",
+          icon: ShoppingCart,
+          color: "from-orange-500 to-amber-600",
+        },
+        {
+          id: "sbi-life",
+          label: "SBI Life",
+          path: "/portal/user/sbi-life",
+          icon: Shield,
+          color: "from-blue-500 to-indigo-600",
         },
         {
           id: "contact-us",

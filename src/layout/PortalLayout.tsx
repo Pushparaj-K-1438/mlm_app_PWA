@@ -29,6 +29,7 @@ import Header from "./Header/Header";
 import { useAuth } from "@/context/AuthContext";
 import { Outlet } from "react-router-dom";
 import DailyVideoFormModal from "@/components/FormModals/DailyVideoModal/DailyVideoFormModal";
+import BirthdayModal from "@/components/BirthdayModal";
 import { ROLE } from "@/constants/others";
 
 const roleLabels: Record<number, string> = {
@@ -196,6 +197,9 @@ const PortalLayout = () => {
           <Outlet context={{ sidebarCollapsed }} />
         </main>
       </div>
+
+      {/* Birthday Modal */}
+      <BirthdayModal />
     </div>
   );
 };
