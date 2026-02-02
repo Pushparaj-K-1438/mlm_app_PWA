@@ -509,7 +509,7 @@ const TrainingProgramWatch = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        // setPlaying(true);
+                        setPlaying(true);
                         handleRedirect(
                           Boolean(
                             data?.data?.training?.training_video?.youtube_link,

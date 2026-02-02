@@ -249,7 +249,21 @@ function PromotionVideosPage() {
         },
         10 * 60 * 1000,
       );
-      window.open(data?.data?.promotion_video?.youtube_link, "_blank");
+
+      const youtubeUrl = data?.data?.promotion_video?.youtube_link || "";
+      const videoIdMatch = youtubeUrl.match(
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
+      );
+
+      if (videoIdMatch && videoIdMatch[1]) {
+        const appUrl = `youtube://watch?v=${videoIdMatch[1]}`;
+        window.location.href = appUrl;
+
+        // Fallback to browser if app not installed
+        setTimeout(() => {
+          window.open(youtubeUrl, "_blank");
+        }, 1500);
+      }
     } else {
       setPlaying(true);
     }

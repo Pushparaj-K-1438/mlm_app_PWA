@@ -339,8 +339,8 @@ export default function DailyVideoWatch({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleRedirect(Boolean(data?.data?.youtube_link));
-                  // setPlaying(true);
+                  //handleRedirect(Boolean(data?.data?.youtube_link));
+                  setPlaying(true);
                 }}
                 className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
               >
