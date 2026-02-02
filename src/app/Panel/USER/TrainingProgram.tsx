@@ -524,7 +524,7 @@ const TrainingProgramWatch = () => {
                 )}
 
               {/* Controls Overlay */}
-              {false && (
+              {playing && showControls && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">

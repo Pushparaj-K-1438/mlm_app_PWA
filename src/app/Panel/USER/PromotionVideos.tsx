@@ -253,41 +253,43 @@ function PromotionVideosPage() {
       const youtubeUrl = data?.data?.promotion_video?.youtube_link || "";
       if (!youtubeUrl) return;
 
-      const match = youtubeUrl.match(
+      const videoIdMatch = youtubeUrl.match(
         /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
       );
 
-      if (!match || !match[1]) {
-        window.location.href = youtubeUrl;
-        return;
-      }
+      if (videoIdMatch && videoIdMatch[1]) {
+        const videoId = videoIdMatch[1];
 
-      const videoId = match[1];
-      const webUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        // For PWA/Mobile, try multiple YouTube app URL schemes
+        // Try YouTube app scheme first (most reliable)
+        const appUrl = `vnd.youtube://${videoId}`;
+        const fallbackUrl = `youtube://watch?v=${videoId}`;
 
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        // Try primary app scheme
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
 
-      if (isAndroid) {
-        // Android intent (most reliable for PWA)
-        const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;package=com.google.android.youtube;scheme=https;end`;
-        window.location.href = intentUrl;
+        // Try to open in YouTube app
+        let appOpened = false;
+        try {
+          // First attempt: vnd.youtube:// scheme (recommended for mobile)
+          window.location.href = appUrl;
+          appOpened = true;
 
-        // Fallback
-        setTimeout(() => {
-          window.location.href = webUrl;
-        }, 1500);
-      } else if (isIOS) {
-        // iOS deep link
-        const appUrl = `youtube://watch?v=${videoId}`;
-        window.location.href = appUrl;
-
-        setTimeout(() => {
-          window.location.href = webUrl;
-        }, 1500);
-      } else {
-        // Desktop
-        window.open(webUrl, "_blank");
+          // Fallback: if app doesn't open, redirect to YouTube in browser
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            // Open in YouTube app or browser
+            const mobileUrl = `https://m.youtube.com/watch?v=${videoId}`;
+            window.open(mobileUrl, "_blank");
+          }, 2000);
+        } catch (e) {
+          console.error("Error opening YouTube app:", e);
+          document.body.removeChild(iframe);
+          // Direct fallback to YouTube mobile/browsersite
+          window.open(youtubeUrl, "_blank");
+        }
       }
     } else {
       setPlaying(true);
@@ -470,15 +472,11 @@ function PromotionVideosPage() {
               className={`${isFullscreen ? "h-screen" : "aspect-video"} bg-gray-900 relative`}
               {...videoContainerProps}
             >
-              {data?.data?.promotion_video?.video_path ||
-              data?.data?.promotion_video?.youtube_link ? (
+              {/* For regular video files, use ReactPlayer */}
+              {data?.data?.promotion_video?.video_path ? (
                 <ReactPlayer
                   ref={playerRef}
-                  src={
-                    data?.data?.promotion_video?.video_path
-                      ? Lib.CloudPath(data?.data?.promotion_video?.video_path)
-                      : data?.data?.promotion_video?.youtube_link
-                  }
+                  src={Lib.CloudPath(data?.data?.promotion_video?.video_path)}
                   width="100%"
                   height="100%"
                   controls={false}
@@ -491,9 +489,29 @@ function PromotionVideosPage() {
                   onEnded={handlevideoWatchCompleted}
                   onError={(error) => {
                     console.error("ReactPlayer Error:", error);
-                    // Handle video loading errors
                   }}
                 />
+              ) : data?.data?.promotion_video?.youtube_link ? (
+                /* For YouTube videos, show thumbnail with play button (opens in app) */
+                <>
+                  <div className="absolute inset-0 bg-gray-900">
+                    <img
+                      src={`https://img.youtube.com/vi/${data?.data?.promotion_video?.youtube_link?.match(
+                        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
+                      )?.[1] || ""}/maxresdefault.jpg`}
+                      alt="YouTube Video Thumbnail"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        const videoId = data?.data?.promotion_video?.youtube_link?.match(
+                          /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
+                        )?.[1];
+                        target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+                  </div>
+                </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available
@@ -504,16 +522,22 @@ function PromotionVideosPage() {
               {!playing &&
                 (data?.data?.promotion_video?.video_path ||
                   data?.data?.promotion_video?.youtube_link) && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                  <div className="absolute inset-0 flex items-center justify-center">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        // setPlaying(true);
-                        handleRedirect(
-                          Boolean(data?.data?.promotion_video?.youtube_link),
-                        );
+                        const isYoutube = Boolean(data?.data?.promotion_video?.youtube_link);
+                        if (isYoutube) {
+                          handleRedirect(true);
+                        } else {
+                          setPlaying(true);
+                        }
                       }}
-                      className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
+                      className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 shadow-lg ${
+                        data?.data?.promotion_video?.youtube_link
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      }`}
                     >
                       <Play className="w-8 h-8 ml-1" />
                     </button>
@@ -521,7 +545,7 @@ function PromotionVideosPage() {
                 )}
 
               {/* Controls Overlay */}
-              {false && (
+              {playing && showControls && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">
