@@ -510,11 +510,11 @@ const TrainingProgramWatch = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setPlaying(true);
-                        handleRedirect(
-                          Boolean(
-                            data?.data?.training?.training_video?.youtube_link,
-                          ),
-                        );
+                        // handleRedirect(
+                        //   Boolean(
+                        //     data?.data?.training?.training_video?.youtube_link,
+                        //   ),
+                        // );
                       }}
                       className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
                     >
