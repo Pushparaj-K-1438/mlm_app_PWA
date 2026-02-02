@@ -61,15 +61,18 @@ export default function DailyVideoWatch({
   // Handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) {
-        setIsFullscreen(false);
-      }
+      const isCurrentlyFullscreen =
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement;
+      setIsFullscreen(!!isCurrentlyFullscreen);
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -129,15 +132,18 @@ export default function DailyVideoWatch({
   const toggleFullscreen = async () => {
     if (!isFullscreen) {
       try {
-        if (containerRef.current) {
-          if (containerRef.current.requestFullscreen) {
-            await containerRef.current.requestFullscreen();
-          } else if ((containerRef.current as any).webkitRequestFullscreen) {
-            await (containerRef.current as any).webkitRequestFullscreen();
-          } else if ((containerRef.current as any).mozRequestFullScreen) {
-            await (containerRef.current as any).mozRequestFullScreen();
-          } else if ((containerRef.current as any).msRequestFullscreen) {
-            await (containerRef.current as any).msRequestFullscreen();
+        // For Android PWA, try video element first, then container
+        const videoElement = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
+        const targetElement = videoElement || containerRef.current;
+
+        if (targetElement) {
+          if (targetElement.requestFullscreen) {
+            await targetElement.requestFullscreen();
+          } else if ((targetElement as any).webkitRequestFullscreen) {
+            await (targetElement as any).webkitRequestFullscreen();
+          } else if ((targetElement as any).webkitEnterFullscreen) {
+            // Fallback for video element
+            await (targetElement as any).webkitEnterFullscreen();
           }
           setIsFullscreen(true);
         }
@@ -150,10 +156,6 @@ export default function DailyVideoWatch({
           await document.exitFullscreen();
         } else if ((document as any).webkitExitFullscreen) {
           await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
         }
         setIsFullscreen(false);
       } catch (error) {

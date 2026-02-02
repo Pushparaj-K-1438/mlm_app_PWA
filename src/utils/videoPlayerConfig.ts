@@ -6,12 +6,16 @@ interface CustomPlayerConfig extends Config {
     attributes?: {
       controlsList?: string;
       disablePictureInPicture?: boolean;
+      playsInline?: boolean;
+      'webkit-playsinline'?: boolean;
+      allowFullScreen?: boolean;
+      webkitAllowFullScreen?: boolean;
     };
   };
   youtube?: {
-    disablekb?: number;
-    fs?: number;
-    rel?: number;
+    disablekb?: 0 | 1;
+    fs?: 0 | 1;
+    rel?: 0 | 1;
     iv_load_policy?: number;
   };
 }
@@ -22,12 +26,14 @@ export const getVideoPlayerConfig = (): CustomPlayerConfig => ({
       controlsList: 'nodownload',
       disablePictureInPicture: true,
       playsInline: true,
-      'webkit-playsinline': true
+      'webkit-playsinline': true,
+      allowFullScreen: true,
+      webkitAllowFullScreen: true,
     }
   },
   youtube: {
     disablekb: 1,
-    fs: 0,
+    fs: 1, // Enable fullscreen for YouTube
     rel: 0,
     iv_load_policy: 3
   }
