@@ -251,18 +251,43 @@ function PromotionVideosPage() {
       );
 
       const youtubeUrl = data?.data?.promotion_video?.youtube_link || "";
-      const videoIdMatch = youtubeUrl.match(
+      if (!youtubeUrl) return;
+
+      const match = youtubeUrl.match(
         /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
       );
 
-      if (videoIdMatch && videoIdMatch[1]) {
-        const appUrl = `youtube://watch?v=${videoIdMatch[1]}`;
+      if (!match || !match[1]) {
+        window.location.href = youtubeUrl;
+        return;
+      }
+
+      const videoId = match[1];
+      const webUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isAndroid) {
+        // Android intent (most reliable for PWA)
+        const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;package=com.google.android.youtube;scheme=https;end`;
+        window.location.href = intentUrl;
+
+        // Fallback
+        setTimeout(() => {
+          window.location.href = webUrl;
+        }, 1500);
+      } else if (isIOS) {
+        // iOS deep link
+        const appUrl = `youtube://watch?v=${videoId}`;
         window.location.href = appUrl;
 
-        // Fallback to browser if app not installed
         setTimeout(() => {
-          window.open(youtubeUrl, "_blank");
+          window.location.href = webUrl;
         }, 1500);
+      } else {
+        // Desktop
+        window.open(webUrl, "_blank");
       }
     } else {
       setPlaying(true);
