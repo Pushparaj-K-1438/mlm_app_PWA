@@ -64,6 +64,16 @@ export default function DailyVideoWatch({
       if (isFullscreen) {
         e.preventDefault();
         setIsFullscreen(false);
+        // Exit native fullscreen if active
+        try {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else if ((document as any).webkitFullscreenElement) {
+            (document as any).webkitExitFullscreen();
+          }
+        } catch (err) {
+          // Ignore
+        }
         // Unlock screen orientation
         try {
           if (screen.orientation && screen.orientation.unlock) {
@@ -77,14 +87,33 @@ export default function DailyVideoWatch({
       }
     };
 
+    // Listen for native fullscreen changes
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+        setIsFullscreen(false);
+        try {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+        } catch (err) {
+          // Ignore
+        }
+      }
+    };
+
     if (isFullscreen) {
       // Push a state so back button can be intercepted
       window.history.pushState(null, "", window.location.href);
       window.addEventListener("popstate", handleBackButton);
     }
 
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
     return () => {
       window.removeEventListener("popstate", handleBackButton);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
     };
   }, [isFullscreen]);
 
@@ -115,36 +144,105 @@ export default function DailyVideoWatch({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleProgress = (e: any) => {
-    const video = e.target as HTMLVideoElement;
-    if (video.duration) {
-      const progress = video.currentTime / video.duration;
-      setPlayed(progress);
-      setCurrentTime(video.currentTime);
+  // Extract YouTube video ID from URL
+  const getYouTubeVideoId = (url: string): string => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\n?#]+)/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return "";
+  };
+
+  // Convert YouTube Shorts URL to standard YouTube URL
+  const getVideoUrl = () => {
+    if (data?.data?.video_path) {
+      return Lib.CloudPath(data?.data?.video_path);
+    }
+
+    let youtubeLink = data?.data?.youtube_link || "";
+
+    // Convert YouTube Shorts URL to standard format
+    // https://www.youtube.com/shorts/VIDEO_ID -> https://www.youtube.com/watch?v=VIDEO_ID
+    if (youtubeLink.includes("/shorts/")) {
+      const videoId = youtubeLink.split("/shorts/")[1]?.split("?")[0];
+      if (videoId) {
+        youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+      }
+    }
+
+    console.log("Video URL:", youtubeLink);
+    return youtubeLink;
+  };
+
+  const videoUrl = getVideoUrl();
+
+  // Get duration when player is ready
+  const handleReady = () => {
+    if (playerRef.current) {
+      const dur = playerRef.current.getDuration();
+      if (dur) setDuration(dur);
     }
   };
 
-  const handleDurationChange = (e: any) => {
-    const video = e.target as HTMLVideoElement;
-    setDuration(video.duration);
-  };
+  // Track progress via interval when playing
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (playing && playerRef.current) {
+      interval = setInterval(() => {
+        const player = playerRef.current;
+        if (player) {
+          const current = player.getCurrentTime() || 0;
+          const dur = player.getDuration() || 0;
+          setCurrentTime(current);
+          if (dur > 0) {
+            setPlayed(current / dur);
+            setDuration(dur);
+          }
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [playing]);
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const bounds = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - bounds.left) / bounds.width;
-    const seekTime = percent * duration;
 
-    // Access the internal player element
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && "currentTime" in internalPlayer) {
-      internalPlayer.currentTime = seekTime;
+    // Use ReactPlayer's seekTo method
+    if (playerRef.current) {
+      playerRef.current.seekTo(percent, "fraction");
     }
   };
 
   const toggleFullscreen = async () => {
+    const container = containerRef.current;
+
     if (!isFullscreen) {
-      // Use CSS-based fullscreen for Android PWA (most reliable)
       setIsFullscreen(true);
+
+      // Try native Fullscreen API first (works in WebView)
+      try {
+        if (container) {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+          } else if ((container as any).webkitRequestFullscreen) {
+            await (container as any).webkitRequestFullscreen();
+          } else if ((container as any).webkitEnterFullscreen) {
+            await (container as any).webkitEnterFullscreen();
+          }
+        }
+      } catch (e) {
+        // Native fullscreen not supported, CSS fallback is active
+      }
 
       // Try to lock screen orientation to landscape
       try {
@@ -152,10 +250,21 @@ export default function DailyVideoWatch({
           await (screen.orientation as any).lock("landscape");
         }
       } catch (e) {
-        // Orientation lock not supported or failed - continue anyway
+        // Orientation lock not supported or failed
       }
     } else {
       setIsFullscreen(false);
+
+      // Exit native fullscreen
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitFullscreenElement) {
+          await (document as any).webkitExitFullscreen();
+        }
+      } catch (e) {
+        // Native fullscreen exit failed
+      }
 
       // Unlock screen orientation
       try {
@@ -169,11 +278,7 @@ export default function DailyVideoWatch({
   };
 
   const toggleMute = () => {
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && "muted" in internalPlayer) {
-      internalPlayer.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
+    setIsMuted(!isMuted);
   };
 
   const handleVideoContainerClick = () => {
@@ -308,39 +413,48 @@ export default function DailyVideoWatch({
           className={`${
             isFullscreen ? "h-screen" : "aspect-video"
           } bg-gray-900 relative`}
-          {...videoContainerProps}
         >
-          {data?.data?.video_path || data?.data?.youtube_link ? (
-            <ReactPlayer
-              ref={playerRef}
-              src={
-                data?.data?.video_path
-                  ? Lib.CloudPath(data?.data?.video_path)
-                  : data?.data?.youtube_link
-              }
-              width="100%"
-              height="100%"
-              controls={false}
-              playing={playing}
-              onTimeUpdate={handleProgress}
-              onDurationChange={handleDurationChange}
-              muted={isMuted}
-              playsInline
-              config={getVideoPlayerConfig()}
-              onEnded={handlevideoWatchCompleted}
-              onError={(error) => {
-                console.error("ReactPlayer Error:", error);
-                // Handle video loading errors
-              }}
-            />
+          {videoUrl ? (
+            // Check if it's a YouTube URL
+            videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoUrl)}?rel=0&modestbranding=1&playsinline=1`}
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+                style={{ position: 'absolute', top: 0, left: 0, border: 'none' }}
+              />
+            ) : (
+              <ReactPlayer
+                ref={playerRef}
+                url={videoUrl}
+                width="100%"
+                height="100%"
+                controls={true}
+                playing={playing}
+                muted={isMuted}
+                playsinline={true}
+                onReady={() => {
+                  console.log("Player ready");
+                  handleReady();
+                }}
+                onPlay={() => console.log("Playing")}
+                onError={(error: any) => {
+                  console.error("ReactPlayer Error:", error);
+                }}
+                onEnded={handlevideoWatchCompleted}
+              />
+            )
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
               No video source available
             </div>
           )}
 
-          {/* Custom Play Button Overlay */}
-          {!playing && (data?.data?.video_path || data?.data?.youtube_link) && (
+          {/* Custom Play Button Overlay - Only show for non-YouTube videos */}
+          {!playing && videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be") && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
               <button
                 onClick={(e) => {
@@ -355,8 +469,8 @@ export default function DailyVideoWatch({
             </div>
           )}
 
-          {/* Controls Overlay - Show when playing and controls are visible */}
-          {playing && showControls && (
+          {/* Controls Overlay - Show when playing and controls are visible (non-YouTube only) */}
+          {playing && showControls && videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be") && (
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
               {/* Top Controls */}
               <div className="flex justify-between items-center p-4 pointer-events-auto">
