@@ -16,7 +16,7 @@ interface CustomPlayerConfig extends Config {
     disablekb?: 0 | 1;
     fs?: 0 | 1;
     rel?: 0 | 1;
-    iv_load_policy?: number;
+    iv_load_policy?: 1 | 3;
   };
 }
 

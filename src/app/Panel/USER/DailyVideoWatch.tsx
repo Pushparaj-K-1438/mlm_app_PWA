@@ -58,23 +58,35 @@ export default function DailyVideoWatch({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Handle fullscreen change
+  // Handle back button to exit fullscreen on Android
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen =
-        document.fullscreenElement ||
-        (document as any).webkitFullscreenElement;
-      setIsFullscreen(!!isCurrentlyFullscreen);
+    const handleBackButton = (e: PopStateEvent) => {
+      if (isFullscreen) {
+        e.preventDefault();
+        setIsFullscreen(false);
+        // Unlock screen orientation
+        try {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+        } catch (err) {
+          // Ignore
+        }
+        // Push state back to prevent actual navigation
+        window.history.pushState(null, "", window.location.href);
+      }
     };
 
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    if (isFullscreen) {
+      // Push a state so back button can be intercepted
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", handleBackButton);
+    }
 
     return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      window.removeEventListener("popstate", handleBackButton);
     };
-  }, []);
+  }, [isFullscreen]);
 
   // Auto-hide controls when playing
   useEffect(() => {
@@ -131,35 +143,27 @@ export default function DailyVideoWatch({
 
   const toggleFullscreen = async () => {
     if (!isFullscreen) {
-      try {
-        // For Android PWA, try video element first, then container
-        const videoElement = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
-        const targetElement = videoElement || containerRef.current;
+      // Use CSS-based fullscreen for Android PWA (most reliable)
+      setIsFullscreen(true);
 
-        if (targetElement) {
-          if (targetElement.requestFullscreen) {
-            await targetElement.requestFullscreen();
-          } else if ((targetElement as any).webkitRequestFullscreen) {
-            await (targetElement as any).webkitRequestFullscreen();
-          } else if ((targetElement as any).webkitEnterFullscreen) {
-            // Fallback for video element
-            await (targetElement as any).webkitEnterFullscreen();
-          }
-          setIsFullscreen(true);
+      // Try to lock screen orientation to landscape
+      try {
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock("landscape");
         }
-      } catch (error) {
-        console.error("Error attempting to enable fullscreen:", error);
+      } catch (e) {
+        // Orientation lock not supported or failed - continue anyway
       }
     } else {
+      setIsFullscreen(false);
+
+      // Unlock screen orientation
       try {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
         }
-        setIsFullscreen(false);
-      } catch (error) {
-        console.error("Error attempting to exit fullscreen:", error);
+      } catch (e) {
+        // Orientation unlock not supported
       }
     }
   };
@@ -321,7 +325,7 @@ export default function DailyVideoWatch({
               onTimeUpdate={handleProgress}
               onDurationChange={handleDurationChange}
               muted={isMuted}
-              playsinline
+              playsInline
               config={getVideoPlayerConfig()}
               onEnded={handlevideoWatchCompleted}
               onError={(error) => {
