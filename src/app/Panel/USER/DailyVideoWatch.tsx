@@ -415,62 +415,53 @@ export default function DailyVideoWatch({
             } bg-gray-900 relative`}
         >
           {videoUrl ? (
-            // Check if it's a YouTube URL
-            videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoUrl)}?rel=0&modestbranding=1&playsinline=1`}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-                style={{ position: 'absolute', top: 0, left: 0, border: 'none' }}
-              />
-            ) : (
-              <ReactPlayer
-                ref={playerRef}
-                url={videoUrl}
-                width="100%"
-                height="100%"
-                controls={true}
-                playing={playing}
-                muted={isMuted}
-                playsinline={true}
-                onReady={() => {
-                  console.log("Player ready");
-                  handleReady();
-                }}
-                onPlay={() => console.log("Playing")}
-                onError={(error: any) => {
-                  console.error("ReactPlayer Error:", error);
-                }}
-                onEnded={handlevideoWatchCompleted}
-              />
-            )
+            <ReactPlayer
+              ref={playerRef}
+              url={videoUrl}
+              width="100%"
+              height="100%"
+              controls={false}
+              playing={playing}
+              muted={isMuted}
+              playsinline={true}
+              onReady={() => {
+                console.log("Player ready");
+                handleReady();
+              }}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onError={(error: any) => {
+                console.error("ReactPlayer Error:", error);
+              }}
+              onEnded={handlevideoWatchCompleted}
+              config={getVideoPlayerConfig()}
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
               No video source available
             </div>
           )}
 
-          {/* Custom Play Button Overlay - Only show for non-YouTube videos */}
-          {!playing && videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be") && (
+          {/* Custom Play Button Overlay */}
+          {!playing && videoUrl && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  //handleRedirect(Boolean(data?.data?.youtube_link));
                   setPlaying(true);
                 }}
-                className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
+                className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 ${videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                  }`}
               >
                 <Play className="w-8 h-8 ml-1" />
               </button>
             </div>
           )}
 
-          {/* Controls Overlay - Show when playing and controls are visible (non-YouTube only) */}
-          {playing && showControls && videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be") && (
+          {/* Controls Overlay - Show when playing and controls are visible */}
+          {showControls && videoUrl && (
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
               {/* Top Controls */}
               <div className="flex justify-between items-center p-4 pointer-events-auto">

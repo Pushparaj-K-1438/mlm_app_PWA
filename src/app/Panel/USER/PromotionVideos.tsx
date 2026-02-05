@@ -455,19 +455,27 @@ function PromotionVideosPage() {
 
           {/* Video Player Section */}
           <div
-            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+            className={`bg-black ${isFullscreen
+                ? "fixed inset-0 z-50"
+                : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+              }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
             <div
-              className={`${isFullscreen ? "h-screen" : "aspect-video"} bg-gray-900 relative`}
+              className={`${isFullscreen ? "h-screen" : "aspect-video"
+                } bg-gray-900 relative`}
               {...videoContainerProps}
             >
-              {/* For regular video files, use ReactPlayer */}
-              {data?.data?.promotion_video?.video_path ? (
+              {data?.data?.promotion_video?.video_path ||
+                data?.data?.promotion_video?.youtube_link ? (
                 <ReactPlayer
                   ref={playerRef}
-                  src={Lib.CloudPath(data?.data?.promotion_video?.video_path)}
+                  url={
+                    data?.data?.promotion_video?.video_path
+                      ? Lib.CloudPath(data?.data?.promotion_video?.video_path)
+                      : data?.data?.promotion_video?.youtube_link
+                  }
                   width="100%"
                   height="100%"
                   controls={false}
@@ -482,27 +490,6 @@ function PromotionVideosPage() {
                     console.error("ReactPlayer Error:", error);
                   }}
                 />
-              ) : data?.data?.promotion_video?.youtube_link ? (
-                /* For YouTube videos, show thumbnail with play button (opens in app) */
-                <>
-                  <div className="absolute inset-0 bg-gray-900">
-                    <img
-                      src={`https://img.youtube.com/vi/${data?.data?.promotion_video?.youtube_link?.match(
-                        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
-                      )?.[1] || ""}/maxresdefault.jpg`}
-                      alt="YouTube Video Thumbnail"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        const videoId = data?.data?.promotion_video?.youtube_link?.match(
-                          /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
-                        )?.[1];
-                        target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                  </div>
-                </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available
@@ -513,16 +500,11 @@ function PromotionVideosPage() {
               {!playing &&
                 (data?.data?.promotion_video?.video_path ||
                   data?.data?.promotion_video?.youtube_link) && (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        const isYoutube = Boolean(data?.data?.promotion_video?.youtube_link);
-                        if (isYoutube) {
-                          handleRedirect(true);
-                        } else {
-                          setPlaying(true);
-                        }
+                        setPlaying(true);
                       }}
                       className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 shadow-lg ${data?.data?.promotion_video?.youtube_link
                           ? "bg-red-600 hover:bg-red-700"
@@ -535,7 +517,7 @@ function PromotionVideosPage() {
                 )}
 
               {/* Controls Overlay */}
-              {playing && showControls && (
+              {showControls && (data?.data?.promotion_video?.video_path || data?.data?.promotion_video?.youtube_link) && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">

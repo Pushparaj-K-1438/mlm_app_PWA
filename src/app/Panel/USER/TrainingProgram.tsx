@@ -449,7 +449,10 @@ const TrainingProgramWatch = () => {
 
           {/* Video Player Section */}
           <div
-            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+            className={`bg-black ${isFullscreen
+                ? "fixed inset-0 z-50"
+                : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+              }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
