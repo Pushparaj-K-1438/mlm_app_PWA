@@ -87,18 +87,13 @@ export default function DailyVideoWatch({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleProgress = (e: any) => {
-    const video = e.target as HTMLVideoElement;
-    if (video.duration) {
-      const progress = video.currentTime / video.duration;
-      setPlayed(progress);
-      setCurrentTime(video.currentTime);
-    }
+  const handleProgress = (state: { played: number; playedSeconds: number }) => {
+    setPlayed(state.played);
+    setCurrentTime(state.playedSeconds);
   };
 
-  const handleDurationChange = (e: any) => {
-    const video = e.target as HTMLVideoElement;
-    setDuration(video.duration);
+  const handleDuration = (d: number) => {
+    setDuration(d);
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -106,11 +101,7 @@ export default function DailyVideoWatch({
     const percent = (e.clientX - bounds.left) / bounds.width;
     const seekTime = percent * duration;
 
-    // Access the internal player element
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && "currentTime" in internalPlayer) {
-      internalPlayer.currentTime = seekTime;
-    }
+    playerRef.current?.seekTo(seekTime);
   };
 
   const toggleFullscreen = async () => {
@@ -126,11 +117,11 @@ export default function DailyVideoWatch({
           } else if ((containerRef.current as any).msRequestFullscreen) {
             await (containerRef.current as any).msRequestFullscreen();
           }
-          setIsFullscreen(true);
         }
       } catch (error) {
         console.error('Error attempting to enable fullscreen:', error);
       }
+      setIsFullscreen(true);
     } else {
       try {
         if (document.exitFullscreen) {
@@ -142,10 +133,10 @@ export default function DailyVideoWatch({
         } else if ((document as any).msExitFullscreen) {
           await (document as any).msExitFullscreen();
         }
-        setIsFullscreen(false);
       } catch (error) {
         console.error('Error attempting to exit fullscreen:', error);
       }
+      setIsFullscreen(false);
     }
   };
 
@@ -246,7 +237,7 @@ export default function DailyVideoWatch({
           {data?.data?.video_path || data?.data?.youtube_link ? (
             <ReactPlayer
               ref={playerRef}
-              src={
+              url={
                 data?.data?.video_path
                   ? Lib.CloudPath(data?.data?.video_path)
                   : data?.data?.youtube_link
@@ -255,8 +246,8 @@ export default function DailyVideoWatch({
               height="100%"
               controls={false}
               playing={playing}
-              onTimeUpdate={handleProgress}
-              onDurationChange={handleDurationChange}
+              onProgress={handleProgress}
+              onDuration={handleDuration}
               muted={isMuted}
               playsinline
               config={getVideoPlayerConfig()}

@@ -124,18 +124,13 @@ function PromotionVideosPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleProgress = (e: any) => {
-    const video = e.target as HTMLVideoElement;
-    if (video.duration) {
-      const progress = video.currentTime / video.duration;
-      setPlayed(progress);
-      setCurrentTime(video.currentTime);
-    }
+  const handleProgress = (state: { played: number; playedSeconds: number }) => {
+    setPlayed(state.played);
+    setCurrentTime(state.playedSeconds);
   };
 
-  const handleDurationChange = (e: any) => {
-    const video = e.target as HTMLVideoElement;
-    setDuration(video.duration);
+  const handleDuration = (d: number) => {
+    setDuration(d);
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -143,11 +138,7 @@ function PromotionVideosPage() {
     const percent = (e.clientX - bounds.left) / bounds.width;
     const seekTime = percent * duration;
 
-    // Access the internal player element
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && "currentTime" in internalPlayer) {
-      internalPlayer.currentTime = seekTime;
-    }
+    playerRef.current?.seekTo(seekTime);
   };
 
   const toggleFullscreen = async () => {
@@ -163,11 +154,11 @@ function PromotionVideosPage() {
           } else if ((containerRef.current as any).msRequestFullscreen) {
             await (containerRef.current as any).msRequestFullscreen();
           }
-          setIsFullscreen(true);
         }
       } catch (error) {
         console.error('Error attempting to enable fullscreen:', error);
       }
+      setIsFullscreen(true);
     } else {
       try {
         if (document.exitFullscreen) {
@@ -179,10 +170,10 @@ function PromotionVideosPage() {
         } else if ((document as any).msExitFullscreen) {
           await (document as any).msExitFullscreen();
         }
-        setIsFullscreen(false);
       } catch (error) {
         console.error('Error attempting to exit fullscreen:', error);
       }
+      setIsFullscreen(false);
     }
   };
 
@@ -397,7 +388,7 @@ function PromotionVideosPage() {
 
           {/* Video Player Section */}
           <div 
-            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+            className={`bg-black ${isFullscreen ? 'fixed inset-0 z-50' : 'relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden'}`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
@@ -409,7 +400,7 @@ function PromotionVideosPage() {
               data?.data?.promotion_video?.youtube_link ? (
                 <ReactPlayer
                   ref={playerRef}
-                  src={
+                  url={
                     data?.data?.promotion_video?.video_path
                       ? Lib.CloudPath(data?.data?.promotion_video?.video_path)
                       : data?.data?.promotion_video?.youtube_link
@@ -418,8 +409,8 @@ function PromotionVideosPage() {
                   height="100%"
                   controls={false}
                   playing={playing}
-                  onTimeUpdate={handleProgress}
-                  onDurationChange={handleDurationChange}
+                  onProgress={handleProgress}
+                  onDuration={handleDuration}
                   muted={isMuted}
                   playsinline
                   config={getVideoPlayerConfig()}

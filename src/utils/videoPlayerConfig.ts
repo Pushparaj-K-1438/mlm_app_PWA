@@ -27,9 +27,12 @@ export const getVideoPlayerConfig = (): CustomPlayerConfig => ({
   },
   youtube: {
     disablekb: 1,
-    fs: 0,
+    fs: 1,
     rel: 0,
-    iv_load_policy: 3
+    iv_load_policy: 3,
+    playerVars: {
+      playsinline: 1,
+    }
   }
 });
 
