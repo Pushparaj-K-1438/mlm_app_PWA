@@ -41,6 +41,12 @@ const ScratchCard = Loadable(
 const ContactUs = Loadable(
   lazy(() => import("@/app/Panel/USER/ContactUs"))
 );
+const Repurchase = Loadable(
+  lazy(() => import("@/app/Panel/USER/Repurchase"))
+);
+const SBILife = Loadable(
+  lazy(() => import("@/app/Panel/USER/SBILife"))
+);
 const NormalUserRoutes = {
   path: "portal/user",
   element: <PortalLayout />,
@@ -93,6 +99,14 @@ const NormalUserRoutes = {
     {
       path: "contact-us",
       element: <ContactUs />,
+    },
+    {
+      path: "repurchase",
+      element: <Repurchase />,
+    },
+    {
+      path: "sbi-life",
+      element: <SBILife />,
     },
   ],
 };

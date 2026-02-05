@@ -41,7 +41,7 @@ import {
 
 function PromotionVideosPage() {
   const { data, loading, setQuery, error } = useGetCall(
-    SERVICE.GET_PROMOTION_VIDEO
+    SERVICE.GET_PROMOTION_VIDEO,
   );
   const { data: userInfo } = useGetCall(SERVICE.GET_PROFILE);
   const {
@@ -75,11 +75,51 @@ function PromotionVideosPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleTakeQuiz = () => {
+    Swal.fire({
+      icon: "info",
+      title: `Read Instructions`,
+      html: `
+     <ul>
+      <li>* Each question has 55 seconds to answer.</li>
+      <li>* Once submitted, you cannot return to previous questions.</li>
+      <li>* Unanswered questions after 55 seconds will auto-skip.</li>
+      <li>* No pausing or refreshing during the quiz.</li>
+     </ul>
+    `,
+      showCancelButton: true,
+      confirmButtonText: "Take Quiz in English",
+      cancelButtonText: "Take Quiz in Tamil",
+      reverseButtons: true, // Puts the buttons in a specific order (optional)
+      customClass: {
+        confirmButton:
+          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+        cancelButton:
+          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setTakeQuizLang(LANG.EN);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        setTakeQuizLang(LANG.TA);
+      }
+      setTakeQuiz(true);
+    });
+  };
+
+  useEffect(() => {
+    const quizeTaken = localStorage.getItem("promotion_video_quiz_taken");
+
+    if (quizeTaken) {
+      handleTakeQuiz();
+    }
   }, []);
 
   // Handle fullscreen change
@@ -89,11 +129,11 @@ function PromotionVideosPage() {
         setIsFullscreen(false);
       }
     };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -103,14 +143,14 @@ function PromotionVideosPage() {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     } else {
       setShowControls(true);
     }
-    
+
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
@@ -156,7 +196,7 @@ function PromotionVideosPage() {
           }
         }
       } catch (error) {
-        console.error('Error attempting to enable fullscreen:', error);
+        console.error("Error attempting to enable fullscreen:", error);
       }
       setIsFullscreen(true);
     } else {
@@ -171,7 +211,7 @@ function PromotionVideosPage() {
           await (document as any).msExitFullscreen();
         }
       } catch (error) {
-        console.error('Error attempting to exit fullscreen:', error);
+        console.error("Error attempting to exit fullscreen:", error);
       }
       setIsFullscreen(false);
     }
@@ -188,6 +228,62 @@ function PromotionVideosPage() {
   const handleVideoContainerClick = () => {
     if (playing) {
       setShowControls(!showControls);
+    }
+  };
+
+  const handleRedirect = async (isYoutube = false) => {
+    if (isYoutube) {
+      localStorage.setItem("promotion_video_quiz_taken", "true");
+      setTimeout(
+        () => {
+          window.location.reload();
+        },
+        10 * 60 * 1000,
+      );
+
+      const youtubeUrl = data?.data?.promotion_video?.youtube_link || "";
+      if (!youtubeUrl) return;
+
+      const videoIdMatch = youtubeUrl.match(
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
+      );
+
+      if (videoIdMatch && videoIdMatch[1]) {
+        const videoId = videoIdMatch[1];
+
+        // For PWA/Mobile, try multiple YouTube app URL schemes
+        // Try YouTube app scheme first (most reliable)
+        const appUrl = `vnd.youtube://${videoId}`;
+        const fallbackUrl = `youtube://watch?v=${videoId}`;
+
+        // Try primary app scheme
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+
+        // Try to open in YouTube app
+        let appOpened = false;
+        try {
+          // First attempt: vnd.youtube:// scheme (recommended for mobile)
+          window.location.href = appUrl;
+          appOpened = true;
+
+          // Fallback: if app doesn't open, redirect to YouTube in browser
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            // Open in YouTube app or browser
+            const mobileUrl = `https://m.youtube.com/watch?v=${videoId}`;
+            window.open(mobileUrl, "_blank");
+          }, 2000);
+        } catch (e) {
+          console.error("Error opening YouTube app:", e);
+          document.body.removeChild(iframe);
+          // Direct fallback to YouTube mobile/browsersite
+          window.open(youtubeUrl, "_blank");
+        }
+      }
+    } else {
+      setPlaying(true);
     }
   };
 
@@ -254,38 +350,6 @@ function PromotionVideosPage() {
     setPlaying(false);
   };
 
-  const handleTakeQuiz = () => {
-    Swal.fire({
-      icon: "info",
-      title: `Read Instructions`,
-      html: `
-     <ul>
-      <li>* Each question has 55 seconds to answer.</li>
-      <li>* Once submitted, you cannot return to previous questions.</li>
-      <li>* Unanswered questions after 55 seconds will auto-skip.</li>
-      <li>* No pausing or refreshing during the quiz.</li>
-     </ul>
-    `,
-      showCancelButton: true,
-      confirmButtonText: "Take Quiz in English",
-      cancelButtonText: "Take Quiz in Tamil",
-      reverseButtons: true, // Puts the buttons in a specific order (optional)
-      customClass: {
-        confirmButton:
-          "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-        cancelButton:
-          "bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setTakeQuizLang(LANG.EN);
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        setTakeQuizLang(LANG.TA);
-      }
-      setTakeQuiz(true);
-    });
-  };
-
   const handleQuizSubmit = async (payload = []) => {
     let formPayload = {
       promotion_video_id: data?.data?.promotion_video?.id,
@@ -313,6 +377,7 @@ function PromotionVideosPage() {
           setTakeQuiz(false);
         }
       });
+      localStorage.removeItem("promotion_video_quiz_taken");
     }
   };
 
@@ -324,7 +389,7 @@ function PromotionVideosPage() {
       Swal.fire(
         "Completed!",
         "Thank you for taking the quiz! Your participation is appreciated.",
-        "success"
+        "success",
       );
       setQuery();
       setTakeQuiz(false);
@@ -338,7 +403,7 @@ function PromotionVideosPage() {
           title={`${data?.data?.promotion_video?.title}`}
           quizQuestion={Lib.transformQuestionsFromResponse(
             data?.data?.promotion_video?.quiz?.questions,
-            takeQuizLang
+            takeQuizLang,
           )}
           handleQuizSubmit={handleQuizSubmit}
         />
@@ -357,7 +422,9 @@ function PromotionVideosPage() {
           {/* Level Benefits */}
           <div className="px-6 mt-6">
             <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
-              <h3 className="text-lg font-semibold mb-4">Your Level Benefits</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Your Level Benefits
+              </h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
                   <div className="flex flex-col items-center justify-center">
@@ -387,24 +454,20 @@ function PromotionVideosPage() {
           </div>
 
           {/* Video Player Section */}
-          <div 
-            className={`bg-black ${isFullscreen ? 'fixed inset-0 z-50' : 'relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden'}`}
+          <div
+            className="bg-black mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
             ref={containerRef}
             onClick={handleVideoContainerClick}
           >
-            <div 
-              className={`${isFullscreen ? 'h-screen' : 'aspect-video'} bg-gray-900 relative`}
+            <div
+              className={`${isFullscreen ? "h-screen" : "aspect-video"} bg-gray-900 relative`}
               {...videoContainerProps}
             >
-              {data?.data?.promotion_video?.video_path ||
-              data?.data?.promotion_video?.youtube_link ? (
+              {/* For regular video files, use ReactPlayer */}
+              {data?.data?.promotion_video?.video_path ? (
                 <ReactPlayer
                   ref={playerRef}
-                  url={
-                    data?.data?.promotion_video?.video_path
-                      ? Lib.CloudPath(data?.data?.promotion_video?.video_path)
-                      : data?.data?.promotion_video?.youtube_link
-                  }
+                  src={Lib.CloudPath(data?.data?.promotion_video?.video_path)}
                   width="100%"
                   height="100%"
                   controls={false}
@@ -417,9 +480,29 @@ function PromotionVideosPage() {
                   onEnded={handlevideoWatchCompleted}
                   onError={(error) => {
                     console.error("ReactPlayer Error:", error);
-                    // Handle video loading errors
                   }}
                 />
+              ) : data?.data?.promotion_video?.youtube_link ? (
+                /* For YouTube videos, show thumbnail with play button (opens in app) */
+                <>
+                  <div className="absolute inset-0 bg-gray-900">
+                    <img
+                      src={`https://img.youtube.com/vi/${data?.data?.promotion_video?.youtube_link?.match(
+                        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
+                      )?.[1] || ""}/maxresdefault.jpg`}
+                      alt="YouTube Video Thumbnail"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        const videoId = data?.data?.promotion_video?.youtube_link?.match(
+                          /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
+                        )?.[1];
+                        target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+                  </div>
+                </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available
@@ -430,13 +513,21 @@ function PromotionVideosPage() {
               {!playing &&
                 (data?.data?.promotion_video?.video_path ||
                   data?.data?.promotion_video?.youtube_link) && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                  <div className="absolute inset-0 flex items-center justify-center">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPlaying(true);
+                        const isYoutube = Boolean(data?.data?.promotion_video?.youtube_link);
+                        if (isYoutube) {
+                          handleRedirect(true);
+                        } else {
+                          setPlaying(true);
+                        }
                       }}
-                      className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
+                      className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 shadow-lg ${data?.data?.promotion_video?.youtube_link
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-blue-600 hover:bg-blue-700"
+                        }`}
                     >
                       <Play className="w-8 h-8 ml-1" />
                     </button>
@@ -444,7 +535,7 @@ function PromotionVideosPage() {
                 )}
 
               {/* Controls Overlay */}
-              {showControls && (
+              {playing && showControls && (
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
                   {/* Top Controls */}
                   <div className="flex justify-between items-center p-4 pointer-events-auto">
@@ -554,19 +645,29 @@ function PromotionVideosPage() {
                 <ul className="space-y-3 text-blue-800">
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Watch the promotional video completely to unlock the quiz</span>
+                    <span>
+                      Watch the promotional video completely to unlock the quiz
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Complete the quiz to earn rewards based on your performance</span>
+                    <span>
+                      Complete the quiz to earn rewards based on your
+                      performance
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>You have one retry option if you're not satisfied with your score</span>
+                    <span>
+                      You have one retry option if you're not satisfied with
+                      your score
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span>Tap the screen to show/hide controls while playing</span>
+                    <span>
+                      Tap the screen to show/hide controls while playing
+                    </span>
                   </li>
                 </ul>
               </div>
