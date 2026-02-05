@@ -164,65 +164,74 @@ function PromotionVideosPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleProgress = (state: { played: number; playedSeconds: number }) => {
+  const handleProgress = (state: any) => {
     setPlayed(state.played);
     setCurrentTime(state.playedSeconds);
   };
 
-  const handleDuration = (d: number) => {
-    setDuration(d);
+  const handleDuration = (duration: number) => {
+    setDuration(duration);
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const bounds = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - bounds.left) / bounds.width;
-    const seekTime = percent * duration;
 
-    playerRef.current?.seekTo(seekTime);
+    if (playerRef.current) {
+      playerRef.current.seekTo(percent, "fraction");
+    }
   };
 
   const toggleFullscreen = async () => {
+    const container = containerRef.current;
+
     if (!isFullscreen) {
+      setIsFullscreen(true);
       try {
-        if (containerRef.current) {
-          if (containerRef.current.requestFullscreen) {
-            await containerRef.current.requestFullscreen();
-          } else if ((containerRef.current as any).webkitRequestFullscreen) {
-            await (containerRef.current as any).webkitRequestFullscreen();
-          } else if ((containerRef.current as any).mozRequestFullScreen) {
-            await (containerRef.current as any).mozRequestFullScreen();
-          } else if ((containerRef.current as any).msRequestFullscreen) {
-            await (containerRef.current as any).msRequestFullscreen();
+        if (container) {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+          } else if ((container as any).webkitRequestFullscreen) {
+            await (container as any).webkitRequestFullscreen();
+          } else if ((container as any).webkitEnterFullscreen) {
+            await (container as any).webkitEnterFullscreen();
           }
         }
-      } catch (error) {
-        console.error("Error attempting to enable fullscreen:", error);
+      } catch (e) {
+        // Fallback
+      }
+      try {
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock("landscape");
+        }
+      } catch (e) {
+        // Fallback
       }
       setIsFullscreen(true);
     } else {
+      setIsFullscreen(false);
       try {
-        if (document.exitFullscreen) {
+        if (document.fullscreenElement) {
           await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
+        } else if ((document as any).webkitFullscreenElement) {
           await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
         }
-      } catch (error) {
-        console.error("Error attempting to exit fullscreen:", error);
+      } catch (e) {
+        // Fallback
+      }
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch (e) {
+        // Fallback
       }
       setIsFullscreen(false);
     }
   };
 
   const toggleMute = () => {
-    const internalPlayer = playerRef.current?.getInternalPlayer();
-    if (internalPlayer && "muted" in internalPlayer) {
-      internalPlayer.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
+    setIsMuted(!isMuted);
   };
 
   const handleVideoContainerClick = () => {

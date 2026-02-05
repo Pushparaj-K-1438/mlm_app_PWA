@@ -181,37 +181,18 @@ export default function DailyVideoWatch({
 
   const videoUrl = getVideoUrl();
 
-  // Get duration when player is ready
-  const handleReady = () => {
-    if (playerRef.current) {
-      const dur = playerRef.current.getDuration();
-      if (dur) setDuration(dur);
-    }
+
+
+
+  // Track progress via onProgress callback
+  const handleProgress = (state: any) => {
+    setPlayed(state.played);
+    setCurrentTime(state.playedSeconds);
   };
 
-  // Track progress via interval when playing
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (playing && playerRef.current) {
-      interval = setInterval(() => {
-        const player = playerRef.current;
-        if (player) {
-          const current = player.getCurrentTime() || 0;
-          const dur = player.getDuration() || 0;
-          setCurrentTime(current);
-          if (dur > 0) {
-            setPlayed(current / dur);
-            setDuration(dur);
-          }
-        }
-      }, 500);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [playing]);
+  const handleDuration = (duration: number) => {
+    setDuration(duration);
+  };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const bounds = e.currentTarget.getBoundingClientRect();
@@ -404,8 +385,8 @@ export default function DailyVideoWatch({
       {/* Video Player Section */}
       <div
         className={`bg-black ${isFullscreen
-            ? "fixed inset-0 z-50"
-            : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+          ? "fixed inset-0 z-50"
+          : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
           }`}
         ref={containerRef}
         onClick={handleVideoContainerClick}
@@ -426,15 +407,16 @@ export default function DailyVideoWatch({
               playsinline={true}
               onReady={() => {
                 console.log("Player ready");
-                handleReady();
               }}
+              onProgress={handleProgress}
+              onDuration={handleDuration}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onError={(error: any) => {
                 console.error("ReactPlayer Error:", error);
               }}
               onEnded={handlevideoWatchCompleted}
-              config={getVideoPlayerConfig()}
+              config={getVideoPlayerConfig() as any}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
@@ -451,8 +433,8 @@ export default function DailyVideoWatch({
                   setPlaying(true);
                 }}
                 className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 ${videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-blue-600 hover:bg-blue-700"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
                   }`}
               >
                 <Play className="w-8 h-8 ml-1" />
