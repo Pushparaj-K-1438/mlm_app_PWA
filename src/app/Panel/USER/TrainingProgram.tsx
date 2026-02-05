@@ -113,12 +113,30 @@ const TrainingProgramWatch = () => {
       }
     };
 
+    // Add/remove body class for immersive fullscreen
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      // Clean up body styles
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     };
-  }, []);
+  }, [isFullscreen]);
 
   // Auto-hide controls when playing
   useEffect(() => {
@@ -166,6 +184,7 @@ const TrainingProgramWatch = () => {
 
   const toggleFullscreen = async () => {
     if (!isFullscreen) {
+      // Try native Fullscreen API
       try {
         if (containerRef.current) {
           if (containerRef.current.requestFullscreen) {
@@ -181,8 +200,19 @@ const TrainingProgramWatch = () => {
       } catch (error) {
         console.error("Error attempting to enable fullscreen:", error);
       }
+
+      // Try to lock screen orientation to landscape
+      try {
+        if (screen.orientation && (screen.orientation as any).lock) {
+          await (screen.orientation as any).lock("landscape");
+        }
+      } catch (error) {
+        // Orientation lock not supported
+      }
+
       setIsFullscreen(true);
     } else {
+      // Exit native fullscreen
       try {
         if (document.exitFullscreen) {
           await document.exitFullscreen();
@@ -196,6 +226,16 @@ const TrainingProgramWatch = () => {
       } catch (error) {
         console.error("Error attempting to exit fullscreen:", error);
       }
+
+      // Unlock screen orientation
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch (error) {
+        // Orientation unlock not supported
+      }
+
       setIsFullscreen(false);
     }
   };
@@ -274,19 +314,9 @@ const TrainingProgramWatch = () => {
     );
   }
 
-  const handleRedirect = async (isYoutube = false) => {
-    if (isYoutube) {
-      localStorage.setItem("training_video_quiz_taken", "true");
-      setTimeout(
-        () => {
-          window.location.reload();
-        },
-        10 * 60 * 1000,
-      );
-      window.open(data?.data?.training?.training_video?.youtube_link, "_blank");
-    } else {
-      setPlaying(true);
-    }
+  // Play video in embedded player (works for both direct files and YouTube)
+  const handlePlayVideo = () => {
+    setPlaying(true);
   };
 
   const handlevideoWatchCompleted = async () => {
@@ -450,11 +480,19 @@ const TrainingProgramWatch = () => {
           {/* Video Player Section */}
           <div
             className={`bg-black ${isFullscreen
-                ? "fixed inset-0 z-50"
+                ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
                 : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
               }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
+            style={isFullscreen ? {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9999,
+            } : undefined}
           >
             <div
               className={`${isFullscreen ? "h-screen" : "aspect-video"
@@ -501,12 +539,7 @@ const TrainingProgramWatch = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPlaying(true);
-                        // handleRedirect(
-                        //   Boolean(
-                        //     data?.data?.training?.training_video?.youtube_link,
-                        //   ),
-                        // );
+                        handlePlayVideo();
                       }}
                       className="flex items-center justify-center w-20 h-20 bg-blue-600 hover:bg-blue-700 rounded-full text-white transition-all transform hover:scale-105"
                     >

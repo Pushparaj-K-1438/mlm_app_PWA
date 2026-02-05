@@ -130,12 +130,30 @@ function PromotionVideosPage() {
       }
     };
 
+    // Add/remove body class for immersive fullscreen
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      // Clean up body styles
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     };
-  }, []);
+  }, [isFullscreen]);
 
   // Auto-hide controls when playing
   useEffect(() => {
@@ -186,7 +204,7 @@ function PromotionVideosPage() {
     const container = containerRef.current;
 
     if (!isFullscreen) {
-      setIsFullscreen(true);
+      // Try native Fullscreen API
       try {
         if (container) {
           if (container.requestFullscreen) {
@@ -198,18 +216,22 @@ function PromotionVideosPage() {
           }
         }
       } catch (e) {
-        // Fallback
+        // Native fullscreen not supported, CSS fallback will be used
       }
+
+      // Try to lock screen orientation to landscape
       try {
         if (screen.orientation && (screen.orientation as any).lock) {
           await (screen.orientation as any).lock("landscape");
         }
       } catch (e) {
-        // Fallback
+        // Orientation lock not supported
       }
+
+      // Set state once after all attempts
       setIsFullscreen(true);
     } else {
-      setIsFullscreen(false);
+      // Exit native fullscreen
       try {
         if (document.fullscreenElement) {
           await document.exitFullscreen();
@@ -217,15 +239,19 @@ function PromotionVideosPage() {
           await (document as any).webkitExitFullscreen();
         }
       } catch (e) {
-        // Fallback
+        // Native fullscreen exit failed
       }
+
+      // Unlock screen orientation
       try {
         if (screen.orientation && screen.orientation.unlock) {
           screen.orientation.unlock();
         }
       } catch (e) {
-        // Fallback
+        // Orientation unlock not supported
       }
+
+      // Set state once after all attempts
       setIsFullscreen(false);
     }
   };
@@ -240,60 +266,9 @@ function PromotionVideosPage() {
     }
   };
 
-  const handleRedirect = async (isYoutube = false) => {
-    if (isYoutube) {
-      localStorage.setItem("promotion_video_quiz_taken", "true");
-      setTimeout(
-        () => {
-          window.location.reload();
-        },
-        10 * 60 * 1000,
-      );
-
-      const youtubeUrl = data?.data?.promotion_video?.youtube_link || "";
-      if (!youtubeUrl) return;
-
-      const videoIdMatch = youtubeUrl.match(
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/,
-      );
-
-      if (videoIdMatch && videoIdMatch[1]) {
-        const videoId = videoIdMatch[1];
-
-        // For PWA/Mobile, try multiple YouTube app URL schemes
-        // Try YouTube app scheme first (most reliable)
-        const appUrl = `vnd.youtube://${videoId}`;
-        const fallbackUrl = `youtube://watch?v=${videoId}`;
-
-        // Try primary app scheme
-        const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-
-        // Try to open in YouTube app
-        let appOpened = false;
-        try {
-          // First attempt: vnd.youtube:// scheme (recommended for mobile)
-          window.location.href = appUrl;
-          appOpened = true;
-
-          // Fallback: if app doesn't open, redirect to YouTube in browser
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-            // Open in YouTube app or browser
-            const mobileUrl = `https://m.youtube.com/watch?v=${videoId}`;
-            window.open(mobileUrl, "_blank");
-          }, 2000);
-        } catch (e) {
-          console.error("Error opening YouTube app:", e);
-          document.body.removeChild(iframe);
-          // Direct fallback to YouTube mobile/browsersite
-          window.open(youtubeUrl, "_blank");
-        }
-      }
-    } else {
-      setPlaying(true);
-    }
+  // Play video in embedded player (works for both direct files and YouTube)
+  const handlePlayVideo = () => {
+    setPlaying(true);
   };
 
   if (loading || quizeUpdateLoading || confirmLoading) {
@@ -465,11 +440,19 @@ function PromotionVideosPage() {
           {/* Video Player Section */}
           <div
             className={`bg-black ${isFullscreen
-                ? "fixed inset-0 z-50"
+                ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
                 : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
               }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
+            style={isFullscreen ? {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9999,
+            } : undefined}
           >
             <div
               className={`${isFullscreen ? "h-screen" : "aspect-video"
@@ -513,7 +496,7 @@ function PromotionVideosPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setPlaying(true);
+                        handlePlayVideo();
                       }}
                       className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 shadow-lg ${data?.data?.promotion_video?.youtube_link
                           ? "bg-red-600 hover:bg-red-700"

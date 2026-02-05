@@ -87,6 +87,19 @@ export default function DailyVideoWatch({
       }
     };
 
+    // Add/remove body class for immersive fullscreen
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+
     // Listen for native fullscreen changes
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
@@ -114,6 +127,11 @@ export default function DailyVideoWatch({
       window.removeEventListener("popstate", handleBackButton);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      // Clean up body styles
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     };
   }, [isFullscreen]);
 
@@ -208,8 +226,6 @@ export default function DailyVideoWatch({
     const container = containerRef.current;
 
     if (!isFullscreen) {
-      setIsFullscreen(true);
-
       // Try native Fullscreen API first (works in WebView)
       try {
         if (container) {
@@ -222,7 +238,7 @@ export default function DailyVideoWatch({
           }
         }
       } catch (e) {
-        // Native fullscreen not supported, CSS fallback is active
+        // Native fullscreen not supported, CSS fallback will be used
       }
 
       // Try to lock screen orientation to landscape
@@ -233,10 +249,10 @@ export default function DailyVideoWatch({
       } catch (e) {
         // Orientation lock not supported or failed
       }
+
+      // Set state once after all attempts
       setIsFullscreen(true);
     } else {
-      setIsFullscreen(false);
-
       // Exit native fullscreen
       try {
         if (document.fullscreenElement) {
@@ -256,6 +272,8 @@ export default function DailyVideoWatch({
       } catch (e) {
         // Orientation unlock not supported
       }
+
+      // Set state once after all attempts
       setIsFullscreen(false);
     }
   };
@@ -289,27 +307,9 @@ export default function DailyVideoWatch({
   //   return () => clearInterval(interval);
   // }, []);
 
-  // Handle redirect for YouTube links
-  const handleRedirect = async (isYoutube = false) => {
-    if (isYoutube) {
-      await updateDVStatus(
-        {
-          daily_video_id: data?.data?.id,
-          watchedstatus: 1,
-        },
-        "",
-      );
-      // localStorage.setItem("refresh_start_time", Date.now().toString());
-      setTimeout(
-        () => {
-          window.location.reload();
-        },
-        10 * 60 * 1000,
-      );
-      window.open(data?.data?.youtube_link, "_blank");
-    } else {
-      setPlaying(true);
-    }
+  // Play video in embedded player (works for both direct files and YouTube)
+  const handlePlayVideo = () => {
+    setPlaying(true);
   };
 
   if (loading) {
@@ -385,11 +385,19 @@ export default function DailyVideoWatch({
       {/* Video Player Section */}
       <div
         className={`bg-black ${isFullscreen
-          ? "fixed inset-0 z-50"
+          ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
           : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
           }`}
         ref={containerRef}
         onClick={handleVideoContainerClick}
+        style={isFullscreen ? {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+        } : undefined}
       >
         <div
           className={`${isFullscreen ? "h-screen" : "aspect-video"
@@ -430,7 +438,7 @@ export default function DailyVideoWatch({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPlaying(true);
+                  handlePlayVideo();
                 }}
                 className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 ${videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")
                   ? "bg-red-600 hover:bg-red-700"
