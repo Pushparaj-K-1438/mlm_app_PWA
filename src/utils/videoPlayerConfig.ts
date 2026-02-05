@@ -1,33 +1,5 @@
-import { Config } from 'react-player';
-
-// Define a custom type that extends the base Config type
-interface CustomPlayerConfig extends Config {
-  file?: {
-    attributes?: {
-      controlsList?: string;
-      disablePictureInPicture?: boolean;
-      playsInline?: boolean;
-      'webkit-playsinline'?: boolean;
-      allowFullScreen?: boolean;
-      webkitAllowFullScreen?: boolean;
-    };
-  };
-  youtube?: {
-    playerVars?: {
-      autoplay?: number;
-      controls?: number;
-      disablekb?: number;
-      fs?: number;
-      rel?: number;
-      iv_load_policy?: number;
-      modestbranding?: number;
-      playsinline?: number;
-      origin?: string;
-    };
-  };
-}
-
-export const getVideoPlayerConfig = (): CustomPlayerConfig => ({
+// Video player configuration for ReactPlayer
+export const getVideoPlayerConfig = () => ({
   file: {
     attributes: {
       controlsList: 'nodownload',
@@ -40,15 +12,18 @@ export const getVideoPlayerConfig = (): CustomPlayerConfig => ({
   },
   youtube: {
     playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 1,
-      rel: 0,
-      iv_load_policy: 3,
-      modestbranding: 1,
-      playsinline: 1,
+      autoplay: 0, // Don't autoplay by default, let ReactPlayer control it
+      controls: 1, // Show YouTube controls
+      disablekb: 0, // Enable keyboard controls
+      fs: 1, // Enable fullscreen button
+      rel: 0, // Don't show related videos
+      iv_load_policy: 3, // Hide annotations
+      modestbranding: 1, // Minimal YouTube branding
+      playsinline: 1, // Play inline on mobile
       origin: typeof window !== 'undefined' ? window.location.origin : '',
+    },
+    embedOptions: {
+      host: 'https://www.youtube.com'
     }
   }
 });

@@ -14,12 +14,12 @@ import { useActionCall, useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
 import ReactPlayer from "react-player";
+const ReactPlayerAny = ReactPlayer as any;
 import UIHelpers from "@/utils/UIhelper";
 import Swal from "sweetalert2";
 import Lib from "@/utils/Lib";
 import {
   getVideoPlayerConfig,
-  videoContainerProps,
 } from "@/utils/videoPlayerConfig";
 
 interface DailyVideoWatchProps {
@@ -36,7 +36,14 @@ export default function DailyVideoWatch({
 
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlayingRaw] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  const setPlaying = React.useCallback((val: boolean) => {
+    console.log(`SET_PLAYING CALLED WITH: ${val}`);
+    setPlayingRaw(val);
+  }, []);
+
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -176,143 +183,308 @@ export default function DailyVideoWatch({
     return "";
   };
 
-  // Convert YouTube Shorts URL to standard YouTube URL
-  const getVideoUrl = () => {
-    if (data?.data?.video_path) {
-      const url = Lib.CloudPath(data?.data?.video_path);
-      console.log("Direct video URL:", url);
-      return url;
-    }
+  const videoUrl = React.useMemo(() => {
+    const path = data?.data?.video_path;
+    const link = data?.data?.youtube_link;
 
-    let youtubeLink = data?.data?.youtube_link || "";
+    // Ensure we trim any potential whitespace from the source
+    let target = (link || path)?.trim();
+    if (!target) return undefined;
 
-    // Convert YouTube Shorts URL to standard format
-    // https://www.youtube.com/shorts/VIDEO_ID -> https://www.youtube.com/watch?v=VIDEO_ID
-    if (youtubeLink.includes("/shorts/")) {
-      const videoId = youtubeLink.split("/shorts/")[1]?.split("?")[0];
-      if (videoId) {
-        youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+    // If it's a YouTube link, handle conversion
+    if (target.includes("youtube.com") || target.includes("youtu.be")) {
+      let youtubeLink = target;
+      if (youtubeLink.includes("/shorts/")) {
+        const videoId = youtubeLink.split("/shorts/")[1]?.split("?")[0];
+        if (videoId) {
+          youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      } else if (youtubeLink.includes("youtu.be/")) {
+        const videoId = youtubeLink.split("youtu.be/")[1]?.split("?")[0];
+        if (videoId) {
+          youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+        }
       }
+
+      if (youtubeLink.includes("youtube.com") && !youtubeLink.includes("www.")) {
+        youtubeLink = youtubeLink.replace("youtube.com", "www.youtube.com");
+      }
+      return youtubeLink;
     }
 
-    console.log("YouTube URL:", youtubeLink);
-    return youtubeLink;
-  };
+    // If it's a direct http link, return it
+    if (target.startsWith("http")) return target;
 
-  const videoUrl = getVideoUrl();
+    // Otherwise it's a storage path
+    return Lib.CloudPath(target);
+  }, [data?.data?.video_path, data?.data?.youtube_link]);
 
+  useEffect(() => {
+    console.log("DEBUG: DailyVideoWatch MOUNTED");
+    return () => console.log("DEBUG: DailyVideoWatch UNMOUNTED");
+  }, []);
 
+  useEffect(() => {
+    console.log("DEBUG: playing state actually changed to:", playing);
+  }, [playing]);
 
+  useEffect(() => {
+    if (videoUrl) {
+      console.log("DEBUG: videoUrl updated:", videoUrl);
+    }
+  }, [videoUrl]);
+
+  const playerConfig = React.useMemo(() => getVideoPlayerConfig(), []);
 
   // Track progress via onProgress callback
-  const handleProgress = (state: any) => {
+
+  const handleProgress = React.useCallback((state: any) => {
+
     setPlayed(state.played);
+
     setCurrentTime(state.playedSeconds);
-  };
 
-  const handleDuration = (duration: number) => {
+  }, []);
+
+
+
+  const handleDuration = React.useCallback((duration: number) => {
+
     setDuration(duration);
-  };
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+  }, []);
+
+
+
+  const handleSeek = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+
     const bounds = e.currentTarget.getBoundingClientRect();
+
     const percent = (e.clientX - bounds.left) / bounds.width;
 
-    // Use ReactPlayer's seekTo method
-    if (playerRef.current) {
-      playerRef.current.seekTo(percent, "fraction");
-    }
-  };
 
-  const toggleFullscreen = async () => {
+
+    // Use ReactPlayer's seekTo method
+
+    if (playerRef.current) {
+
+      playerRef.current.seekTo(percent, "fraction");
+
+    }
+  }, []);
+
+
+
+  const toggleFullscreen = React.useCallback(async () => {
+
     const container = containerRef.current;
 
+
+
     if (!isFullscreen) {
+
       // Try native Fullscreen API first (works in WebView)
+
       try {
+
         if (container) {
+
           if (container.requestFullscreen) {
+
             await container.requestFullscreen();
+
           } else if ((container as any).webkitRequestFullscreen) {
+
             await (container as any).webkitRequestFullscreen();
+
           } else if ((container as any).webkitEnterFullscreen) {
+
             await (container as any).webkitEnterFullscreen();
+
           }
+
         }
+
       } catch (e) {
+
         // Native fullscreen not supported, CSS fallback will be used
+
       }
+
+
 
       // Try to lock screen orientation to landscape
+
       try {
+
         if (screen.orientation && (screen.orientation as any).lock) {
+
           await (screen.orientation as any).lock("landscape");
+
         }
+
       } catch (e) {
+
         // Orientation lock not supported or failed
+
       }
 
+
+
       // Set state once after all attempts
+
       setIsFullscreen(true);
+
     } else {
+
       // Exit native fullscreen
+
       try {
+
         if (document.fullscreenElement) {
+
           await document.exitFullscreen();
+
         } else if ((document as any).webkitFullscreenElement) {
+
           await (document as any).webkitExitFullscreen();
+
         }
+
       } catch (e) {
+
         // Native fullscreen exit failed
+
       }
+
+
 
       // Unlock screen orientation
+
       try {
+
         if (screen.orientation && screen.orientation.unlock) {
+
           screen.orientation.unlock();
+
         }
+
       } catch (e) {
+
         // Orientation unlock not supported
+
       }
 
+
+
       // Set state once after all attempts
+
       setIsFullscreen(false);
+
     }
-  };
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
+  }, [isFullscreen]);
 
-  const handleVideoContainerClick = () => {
+
+
+  const toggleMute = React.useCallback(() => {
+
+    setIsMuted(prev => !prev);
+
+  }, []);
+
+
+
+  const handleVideoContainerClick = React.useCallback(() => {
+
     if (playing) {
-      setShowControls(!showControls);
+
+      setShowControls(prev => !prev);
+
     }
-  };
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     const startTime = localStorage.getItem("refresh_start_time");
+  }, [playing]);
 
-  //     if (!startTime) return;
 
-  //     const elapsed = Date.now() - Number(startTime);
-
-  //     if (elapsed >= 60 * 1000) {
-  //       // 1 minute
-  //       localStorage.removeItem("refresh_start_time");
-  //       clearInterval(interval);
-  //       window.location.reload();
-  //     }
-  //   }, 1000);
-
-  //   return () => clearInterval(interval);
-  // }, []);
 
   // Play video in embedded player (works for both direct files and YouTube)
-  const handlePlayVideo = () => {
+
+  const handlePlayVideo = React.useCallback(() => {
+    console.log("handlePlayVideo called, setting playing to true");
     setPlaying(true);
-  };
+
+    // Direct call to internal player to ensure sync with user interaction
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (typeof internal.playVideo === 'function') internal.playVideo();
+          else if (typeof internal.play === 'function') internal.play().catch(() => { });
+        }
+      } catch (e) { }
+    }
+  }, []);
+
+  const handleTogglePlay = React.useCallback(() => {
+    const nextPlaying = !playing;
+    console.log("handleTogglePlay called, current state:", playing, "next state:", nextPlaying);
+    setPlaying(nextPlaying);
+
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (nextPlaying) {
+            if (typeof internal.playVideo === 'function') internal.playVideo();
+            else if (typeof internal.play === 'function') internal.play().catch(() => { });
+          } else {
+            if (typeof internal.pauseVideo === 'function') internal.pauseVideo();
+            else if (typeof internal.pause === 'function') internal.pause();
+          }
+        }
+      } catch (e) { }
+    }
+  }, [playing]);
+
+  const handlevideoWatchCompleted = React.useCallback(async () => {
+
+
+
+    console.log("handlevideoWatchCompleted CALLED");
+
+
+
+    // if already watched not need to trigger
+
+
+
+    if (!data?.data?.watched) {
+
+
+
+
+      Swal.fire({
+        icon: "success",
+        title: "Daily Video Completed!",
+        text: "You've completed today's daily video! You can now access other features",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton:
+            "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+        },
+      }).then((result) => {
+        setQuery();
+      });
+      await updateDVStatus(
+        {
+          daily_video_id: data?.data?.id,
+          watchedstatus: 1,
+        },
+        "",
+      );
+    }
+    setPlaying(false);
+  }, [data?.data?.watched, data?.data?.id, setQuery, updateDVStatus]);
 
   if (loading) {
     return <Loader />;
@@ -335,32 +507,6 @@ export default function DailyVideoWatch({
       </div>
     );
   }
-
-  const handlevideoWatchCompleted = async () => {
-    // if already watched not need to trigger
-    if (!data?.data?.watched) {
-      Swal.fire({
-        icon: "success",
-        title: "Daily Video Completed!",
-        text: "You've completed today's daily video! You can now access other features",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton:
-            "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
-        },
-      }).then((result) => {
-        setQuery();
-      });
-      await updateDVStatus(
-        {
-          daily_video_id: data?.data?.id,
-          watchedstatus: 1,
-        },
-        "",
-      );
-    }
-    setPlaying(false);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 safe-area-inset-bottom pb-20">
@@ -406,7 +552,8 @@ export default function DailyVideoWatch({
             } bg-gray-900 relative`}
         >
           {videoUrl ? (
-            <ReactPlayer
+            <ReactPlayerAny
+              key={videoUrl}
               ref={playerRef}
               url={videoUrl}
               width="100%"
@@ -416,28 +563,38 @@ export default function DailyVideoWatch({
               muted={isMuted}
               playsinline={true}
               onReady={() => {
-                console.log("Player ready, video URL:", videoUrl);
+                console.log("=== DAILY VIDEO PLAYER READY ===");
               }}
               onStart={() => {
-                console.log("Video started playing");
+                console.log("Video onStart event fired");
+                setHasStarted(true);
               }}
-              onProgress={handleProgress}
+              onProgress={handleProgress as any}
               onDuration={handleDuration}
               onPlay={() => {
-                console.log("onPlay fired");
-                setPlaying(true);
+                console.log("DEBUG: Native onPlay event fired");
+                setHasStarted(true);
+                if (!playing) setPlaying(true);
               }}
               onPause={() => {
-                console.log("onPause fired");
-                setPlaying(false);
+                console.log("DEBUG: Native onPause event fired");
+                if (playing) setPlaying(false);
               }}
-              onError={(error: any, data?: any) => {
+              onError={(error: any) => {
                 console.error("ReactPlayer Error:", error);
-                console.error("Error data:", data);
-                console.error("Video URL:", videoUrl);
               }}
-              onEnded={handlevideoWatchCompleted}
-              config={getVideoPlayerConfig() as any}
+              onEnded={() => {
+                console.log("DEBUG: onEnded event fired");
+                if (duration > 0 && currentTime > duration * 0.9) {
+                  handlevideoWatchCompleted();
+                } else if (duration === 0 && currentTime > 0) {
+                  handlevideoWatchCompleted();
+                } else {
+                  console.log("Video ended prematurely, not marking as watched");
+                  setPlaying(false);
+                }
+              }}
+              config={playerConfig as any}
               style={{ background: 'black' }}
             />
           ) : (
@@ -447,7 +604,7 @@ export default function DailyVideoWatch({
           )}
 
           {/* Custom Play Button Overlay */}
-          {!playing && videoUrl && (
+          {!hasStarted && !playing && videoUrl && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
               <button
                 onClick={(e) => {
@@ -523,7 +680,7 @@ export default function DailyVideoWatch({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setPlaying(!playing);
+                      handleTogglePlay();
                     }}
                     className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors"
                   >

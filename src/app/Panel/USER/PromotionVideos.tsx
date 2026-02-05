@@ -26,6 +26,7 @@ import { SERVICE } from "@/constants/services";
 import { useActionCall, useGetCall } from "@/hooks";
 import Loader from "@/components/ui/Loader";
 import ReactPlayer from "react-player";
+const ReactPlayerAny = ReactPlayer as any;
 import UIHelpers from "@/utils/UIhelper";
 import Swal from "sweetalert2";
 import DailyVideoWarning from "@/components/DailyVideoWarning";
@@ -35,7 +36,6 @@ import Error500 from "@/components/ui/Error500";
 import TrainingVideoWarning from "@/components/TrainingVideoWarning";
 import { LANG } from "@/constants/others";
 import {
-  getVideoPlayerConfig,
   videoContainerProps,
 } from "@/utils/videoPlayerConfig";
 
@@ -176,6 +176,41 @@ function PromotionVideosPage() {
     };
   }, [playing, currentTime]);
 
+  const videoUrl = React.useMemo(() => {
+    const path = data?.data?.promotion_video?.video_path;
+    const link = data?.data?.promotion_video?.youtube_link;
+
+    let target = link || path;
+    if (!target) return undefined;
+
+    // If it's a YouTube link, handle conversion
+    if (target.includes("youtube.com") || target.includes("youtu.be")) {
+      let youtubeLink = target;
+      if (youtubeLink.includes("/shorts/")) {
+        const videoId = youtubeLink.split("/shorts/")[1]?.split("?")[0];
+        if (videoId) {
+          youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      } else if (youtubeLink.includes("youtu.be/")) {
+        const videoId = youtubeLink.split("youtu.be/")[1]?.split("?")[0];
+        if (videoId) {
+          youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      }
+
+      if (youtubeLink.includes("youtube.com") && !youtubeLink.includes("www.")) {
+        youtubeLink = youtubeLink.replace("youtube.com", "www.youtube.com");
+      }
+      return youtubeLink;
+    }
+
+    // If it's a direct http link, return it
+    if (target.startsWith("http")) return target;
+
+    // Otherwise it's a storage path
+    return Lib.CloudPath(target);
+  }, [data?.data?.promotion_video?.video_path, data?.data?.promotion_video?.youtube_link]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -268,7 +303,38 @@ function PromotionVideosPage() {
 
   // Play video in embedded player (works for both direct files and YouTube)
   const handlePlayVideo = () => {
+    console.log("Promotion handlePlayVideo called");
     setPlaying(true);
+
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (typeof internal.playVideo === 'function') internal.playVideo();
+          else if (typeof internal.play === 'function') internal.play().catch(() => { });
+        }
+      } catch (e) { }
+    }
+  };
+
+  const handleTogglePlay = () => {
+    const nextPlaying = !playing;
+    setPlaying(nextPlaying);
+
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (nextPlaying) {
+            if (typeof internal.playVideo === 'function') internal.playVideo();
+            else if (typeof internal.play === 'function') internal.play().catch(() => { });
+          } else {
+            if (typeof internal.pauseVideo === 'function') internal.pauseVideo();
+            else if (typeof internal.pause === 'function') internal.pause();
+          }
+        }
+      } catch (e) { }
+    }
   };
 
   if (loading || quizeUpdateLoading || confirmLoading) {
@@ -440,8 +506,8 @@ function PromotionVideosPage() {
           {/* Video Player Section */}
           <div
             className={`bg-black ${isFullscreen
-                ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
-                : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+              ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
+              : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
               }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
@@ -459,15 +525,10 @@ function PromotionVideosPage() {
                 } bg-gray-900 relative`}
               {...videoContainerProps}
             >
-              {data?.data?.promotion_video?.video_path ||
-                data?.data?.promotion_video?.youtube_link ? (
-                <ReactPlayer
+              {videoUrl ? (
+                <ReactPlayerAny
                   ref={playerRef}
-                  url={
-                    data?.data?.promotion_video?.video_path
-                      ? Lib.CloudPath(data?.data?.promotion_video?.video_path)
-                      : data?.data?.promotion_video?.youtube_link
-                  }
+                  url={videoUrl as any}
                   width="100%"
                   height="100%"
                   controls={false}
@@ -476,22 +537,49 @@ function PromotionVideosPage() {
                   onDuration={handleDuration}
                   muted={isMuted}
                   playsinline
-                  config={getVideoPlayerConfig()}
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        autoplay: 0,
+                        controls: 1,
+                        playsinline: 1,
+                      },
+                      embedOptions: {
+                        host: 'https://www.youtube.com'
+                      }
+                    }
+                  } as any}
                   onReady={() => {
-                    console.log("Promotion video player ready");
+                    console.log("=== PROMOTION PLAYER READY ===");
+                    console.log("Player ref:", playerRef.current);
+                    const internal = playerRef.current?.getInternalPlayer?.();
+                    console.log("Internal player:", internal);
+                    console.log("Internal player type:", internal?.constructor?.name);
+                    console.log("Is YouTube iframe?", internal?.getPlayerState ? "YES - YouTube" : "NO - Not YouTube");
+                    console.log("============================");
                   }}
                   onStart={() => {
                     console.log("Promotion video started playing");
                   }}
                   onPlay={() => {
                     console.log("Promotion video onPlay fired");
-                    setPlaying(true);
+                    if (!playing) setPlaying(true);
                   }}
                   onPause={() => {
                     console.log("Promotion video paused");
-                    setPlaying(false);
+                    if (playing) setPlaying(false);
                   }}
-                  onEnded={handlevideoWatchCompleted}
+                  onEnded={() => {
+                    console.log("Promotion video onEnded fired");
+                    if (duration > 0 && currentTime > duration * 0.9) {
+                      handlevideoWatchCompleted();
+                    } else if (duration === 0 && currentTime > 0) {
+                      handlevideoWatchCompleted();
+                    } else {
+                      console.log("Promotion video ended prematurely, not marking as watched");
+                      setPlaying(false);
+                    }
+                  }}
                   onError={(error: any, data?: any) => {
                     console.error("Promotion ReactPlayer Error:", error);
                     console.error("Error data:", data);
@@ -515,8 +603,8 @@ function PromotionVideosPage() {
                         handlePlayVideo();
                       }}
                       className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 shadow-lg ${data?.data?.promotion_video?.youtube_link
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-blue-600 hover:bg-blue-700"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-blue-600 hover:bg-blue-700"
                         }`}
                     >
                       <Play className="w-8 h-8 ml-1" />
@@ -583,7 +671,7 @@ function PromotionVideosPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setPlaying(!playing);
+                          handleTogglePlay();
                         }}
                         className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors"
                       >

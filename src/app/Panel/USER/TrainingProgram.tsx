@@ -21,6 +21,7 @@ import { useActionCall, useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
 import ReactPlayer from "react-player";
+const ReactPlayerAny = ReactPlayer as any;
 import UIHelpers from "@/utils/UIhelper";
 import Swal from "sweetalert2";
 import DailyVideoWarning from "@/components/DailyVideoWarning";
@@ -29,7 +30,6 @@ import Lib from "@/utils/Lib";
 import Error500 from "@/components/ui/Error500";
 import { LANG } from "@/constants/others";
 import {
-  getVideoPlayerConfig,
   videoContainerProps,
 } from "@/utils/videoPlayerConfig";
 
@@ -137,6 +137,41 @@ const TrainingProgramWatch = () => {
       document.body.style.height = '';
     };
   }, [isFullscreen]);
+
+  const videoUrl = React.useMemo(() => {
+    const path = data?.data?.training?.training_video?.video_path;
+    const link = data?.data?.training?.training_video?.youtube_link;
+
+    let target = link || path;
+    if (!target) return undefined;
+
+    // If it's a YouTube link, handle conversion
+    if (target.includes("youtube.com") || target.includes("youtu.be")) {
+      let youtubeLink = target;
+      if (youtubeLink.includes("/shorts/")) {
+        const videoId = youtubeLink.split("/shorts/")[1]?.split("?")[0];
+        if (videoId) {
+          youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      } else if (youtubeLink.includes("youtu.be/")) {
+        const videoId = youtubeLink.split("youtu.be/")[1]?.split("?")[0];
+        if (videoId) {
+          youtubeLink = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      }
+
+      if (youtubeLink.includes("youtube.com") && !youtubeLink.includes("www.")) {
+        youtubeLink = youtubeLink.replace("youtube.com", "www.youtube.com");
+      }
+      return youtubeLink;
+    }
+
+    // If it's a direct http link, return it
+    if (target.startsWith("http")) return target;
+
+    // Otherwise it's a storage path
+    return Lib.CloudPath(target);
+  }, [data?.data?.training?.training_video?.video_path, data?.data?.training?.training_video?.youtube_link]);
 
   // Auto-hide controls when playing
   useEffect(() => {
@@ -316,7 +351,38 @@ const TrainingProgramWatch = () => {
 
   // Play video in embedded player (works for both direct files and YouTube)
   const handlePlayVideo = () => {
+    console.log("Training handlePlayVideo called");
     setPlaying(true);
+
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (typeof internal.playVideo === 'function') internal.playVideo();
+          else if (typeof internal.play === 'function') internal.play().catch(() => { });
+        }
+      } catch (e) { }
+    }
+  };
+
+  const handleTogglePlay = () => {
+    const nextPlaying = !playing;
+    setPlaying(nextPlaying);
+
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (nextPlaying) {
+            if (typeof internal.playVideo === 'function') internal.playVideo();
+            else if (typeof internal.play === 'function') internal.play().catch(() => { });
+          } else {
+            if (typeof internal.pauseVideo === 'function') internal.pauseVideo();
+            else if (typeof internal.pause === 'function') internal.pause();
+          }
+        }
+      } catch (e) { }
+    }
   };
 
   const handlevideoWatchCompleted = async () => {
@@ -480,8 +546,8 @@ const TrainingProgramWatch = () => {
           {/* Video Player Section */}
           <div
             className={`bg-black ${isFullscreen
-                ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
-                : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
+              ? "fixed inset-0 z-50 !mx-0 !mt-0 !rounded-none"
+              : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
               }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
@@ -501,42 +567,56 @@ const TrainingProgramWatch = () => {
             >
               {data?.data?.training?.training_video?.video_path ||
                 data?.data?.training?.training_video?.youtube_link ? (
-                <ReactPlayer
+                <ReactPlayerAny
                   ref={playerRef}
-                  url={
-                    data?.data?.training?.training_video?.video_path
-                      ? Lib.CloudPath(
-                        data?.data?.training?.training_video?.video_path,
-                      )
-                      : data?.data?.training?.training_video?.youtube_link
-                  }
+                  url={videoUrl as any}
                   width="100%"
                   height="100%"
                   controls={false}
                   playing={playing}
-                  onProgress={handleProgress}
+                  onProgress={handleProgress as any}
                   onDuration={handleDuration}
                   muted={isMuted}
-                  playsinline
-                  config={getVideoPlayerConfig()}
+                  playsinline={true}
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        autoplay: 0,
+                        controls: 1,
+                        playsinline: 1,
+                      },
+                      embedOptions: {
+                        host: 'https://www.youtube.com'
+                      }
+                    }
+                  } as any}
                   onReady={() => {
-                    console.log("Training video player ready");
+                    console.log("=== TRAINING PLAYER READY ===");
                   }}
                   onStart={() => {
                     console.log("Training video started playing");
                   }}
                   onPlay={() => {
                     console.log("Training video onPlay fired");
-                    setPlaying(true);
+                    if (!playing) setPlaying(true);
                   }}
                   onPause={() => {
                     console.log("Training video paused");
-                    setPlaying(false);
+                    if (playing) setPlaying(false);
                   }}
-                  onEnded={handlevideoWatchCompleted}
+                  onEnded={() => {
+                    console.log("Training video onEnded fired");
+                    if (duration > 0 && currentTime > duration * 0.9) {
+                      handlevideoWatchCompleted();
+                    } else if (duration === 0 && currentTime > 0) {
+                      handlevideoWatchCompleted();
+                    } else {
+                      console.log("Training video ended prematurely, not marking as watched");
+                      setPlaying(false);
+                    }
+                  }}
                   onError={(error: any, data?: any) => {
                     console.error("Training ReactPlayer Error:", error);
-                    console.error("Error data:", data);
                   }}
                   style={{ background: 'black' }}
                 />
@@ -624,7 +704,7 @@ const TrainingProgramWatch = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setPlaying(!playing);
+                          handleTogglePlay();
                         }}
                         className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors"
                       >
