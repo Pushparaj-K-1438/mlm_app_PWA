@@ -179,7 +179,9 @@ export default function DailyVideoWatch({
   // Convert YouTube Shorts URL to standard YouTube URL
   const getVideoUrl = () => {
     if (data?.data?.video_path) {
-      return Lib.CloudPath(data?.data?.video_path);
+      const url = Lib.CloudPath(data?.data?.video_path);
+      console.log("Direct video URL:", url);
+      return url;
     }
 
     let youtubeLink = data?.data?.youtube_link || "";
@@ -193,7 +195,7 @@ export default function DailyVideoWatch({
       }
     }
 
-    console.log("Video URL:", youtubeLink);
+    console.log("YouTube URL:", youtubeLink);
     return youtubeLink;
   };
 
@@ -414,17 +416,29 @@ export default function DailyVideoWatch({
               muted={isMuted}
               playsinline={true}
               onReady={() => {
-                console.log("Player ready");
+                console.log("Player ready, video URL:", videoUrl);
+              }}
+              onStart={() => {
+                console.log("Video started playing");
               }}
               onProgress={handleProgress}
               onDuration={handleDuration}
-              onPlay={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
-              onError={(error: any) => {
+              onPlay={() => {
+                console.log("onPlay fired");
+                setPlaying(true);
+              }}
+              onPause={() => {
+                console.log("onPause fired");
+                setPlaying(false);
+              }}
+              onError={(error: any, data?: any) => {
                 console.error("ReactPlayer Error:", error);
+                console.error("Error data:", data);
+                console.error("Video URL:", videoUrl);
               }}
               onEnded={handlevideoWatchCompleted}
               config={getVideoPlayerConfig() as any}
+              style={{ background: 'black' }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white text-lg">

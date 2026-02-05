@@ -477,10 +477,26 @@ function PromotionVideosPage() {
                   muted={isMuted}
                   playsinline
                   config={getVideoPlayerConfig()}
-                  onEnded={handlevideoWatchCompleted}
-                  onError={(error) => {
-                    console.error("ReactPlayer Error:", error);
+                  onReady={() => {
+                    console.log("Promotion video player ready");
                   }}
+                  onStart={() => {
+                    console.log("Promotion video started playing");
+                  }}
+                  onPlay={() => {
+                    console.log("Promotion video onPlay fired");
+                    setPlaying(true);
+                  }}
+                  onPause={() => {
+                    console.log("Promotion video paused");
+                    setPlaying(false);
+                  }}
+                  onEnded={handlevideoWatchCompleted}
+                  onError={(error: any, data?: any) => {
+                    console.error("Promotion ReactPlayer Error:", error);
+                    console.error("Error data:", data);
+                  }}
+                  style={{ background: 'black' }}
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
