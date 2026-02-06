@@ -322,6 +322,35 @@ function PromotionVideosPage() {
     console.log("Promotion handlePlayVideo called");
 
     if (isYoutube && videoUrl) {
+      // Attempt to force open in YouTube App on Mobile (Android Intent)
+      try {
+        let videoId = "";
+        try {
+          const urlObj = new URL(videoUrl);
+          videoId = urlObj.searchParams.get("v") || "";
+        } catch (e) { }
+
+        if (!videoId) {
+          const match = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\n?#]+)/);
+          if (match) videoId = match[1];
+        }
+
+        if (videoId) {
+          const userAgent = navigator.userAgent.toLowerCase();
+          const isAndroid = userAgent.indexOf("android") > -1;
+
+          if (isAndroid) {
+            // Android Intent to force open YouTube App
+            const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;package=com.google.android.youtube;scheme=https;S.browser_fallback_url=${encodeURIComponent(videoUrl)};end`;
+            window.location.href = intentUrl;
+            handlevideoWatchCompleted();
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Error handling mobile YouTube redirect:", e);
+      }
+
       window.open(videoUrl, "_blank");
       handlevideoWatchCompleted();
       return;
