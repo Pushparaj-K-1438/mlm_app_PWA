@@ -340,9 +340,20 @@ function PromotionVideosPage() {
           const isAndroid = userAgent.indexOf("android") > -1;
 
           if (isAndroid) {
-            // Android Intent to force open YouTube App
-            const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;package=com.google.android.youtube;scheme=https;S.browser_fallback_url=${encodeURIComponent(videoUrl)};end`;
-            window.location.href = intentUrl;
+            // Try vnd.youtube scheme which is specifically for the YouTube app
+            // This avoids the ERR_UNKNOWN_URL_SCHEME for intent:// on some webviews
+            const deepLink = `vnd.youtube:${videoId}`;
+            window.location.href = deepLink;
+
+            // We set a small timeout to fallback to browser if the app doesn't pick it up immediately
+            // forcing a standard new window open.
+            setTimeout(() => {
+              // Check if we are still in focus (rough heuristic)
+              if (!document.hidden) {
+                window.open(videoUrl, "_blank");
+              }
+            }, 1000);
+
             handlevideoWatchCompleted();
             return;
           }

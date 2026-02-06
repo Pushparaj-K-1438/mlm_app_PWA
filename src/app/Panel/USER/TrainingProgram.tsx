@@ -405,9 +405,16 @@ const TrainingProgramWatch = () => {
           const isAndroid = userAgent.indexOf("android") > -1;
 
           if (isAndroid) {
-            // Android Intent to force open YouTube App
-            const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;package=com.google.android.youtube;scheme=https;S.browser_fallback_url=${encodeURIComponent(videoUrl)};end`;
-            window.location.href = intentUrl;
+            // Try vnd.youtube scheme which is specifically for the YouTube app
+            const deepLink = `vnd.youtube:${videoId}`;
+            window.location.href = deepLink;
+
+            setTimeout(() => {
+              if (!document.hidden) {
+                window.open(videoUrl, "_blank");
+              }
+            }, 1000);
+
             handlevideoWatchCompleted();
             return;
           }
