@@ -211,6 +211,22 @@ function PromotionVideosPage() {
     return Lib.CloudPath(target);
   }, [data?.data?.promotion_video?.video_path, data?.data?.promotion_video?.youtube_link]);
 
+  const isYoutube = React.useMemo(() => {
+    return videoUrl && (videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be"));
+  }, [videoUrl]);
+
+  const youtubeThumbnailSafe = React.useMemo(() => {
+    if (!isYoutube || !videoUrl) return null;
+    try {
+      const urlObj = new URL(videoUrl);
+      const videoId = urlObj.searchParams.get("v");
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      }
+    } catch (e) { }
+    return null;
+  }, [isYoutube, videoUrl]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -304,6 +320,13 @@ function PromotionVideosPage() {
   // Play video in embedded player (works for both direct files and YouTube)
   const handlePlayVideo = () => {
     console.log("Promotion handlePlayVideo called");
+
+    if (isYoutube && videoUrl) {
+      window.open(videoUrl, "_blank");
+      handlevideoWatchCompleted();
+      return;
+    }
+
     setPlaying(true);
 
     if (playerRef.current) {
@@ -318,6 +341,11 @@ function PromotionVideosPage() {
   };
 
   const handleTogglePlay = () => {
+    if (isYoutube && videoUrl) {
+      handlePlayVideo();
+      return;
+    }
+
     const nextPlaying = !playing;
     setPlaying(nextPlaying);
 
@@ -525,7 +553,7 @@ function PromotionVideosPage() {
                 } bg-gray-900 relative`}
               {...videoContainerProps}
             >
-              {videoUrl ? (
+              {videoUrl && !isYoutube ? (
                 <ReactPlayerAny
                   ref={playerRef}
                   url={videoUrl as any}
@@ -586,6 +614,20 @@ function PromotionVideosPage() {
                   }}
                   style={{ background: 'black' }}
                 />
+              ) : videoUrl && isYoutube ? (
+                <div
+                  className="absolute inset-0 flex items-center justify-center text-white text-lg bg-black bg-cover bg-center"
+                  style={{
+                    backgroundImage: youtubeThumbnailSafe ? `url(${youtubeThumbnailSafe})` : 'none',
+                  }}
+                >
+                  {!youtubeThumbnailSafe && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      {/* Detailed placeholder if no thumbnail */}
+                      <span className="text-sm text-gray-400">Preview not available</span>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available

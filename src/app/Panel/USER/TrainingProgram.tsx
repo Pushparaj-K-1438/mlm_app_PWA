@@ -173,6 +173,39 @@ const TrainingProgramWatch = () => {
     return Lib.CloudPath(target);
   }, [data?.data?.training?.training_video?.video_path, data?.data?.training?.training_video?.youtube_link]);
 
+  const isYoutube = React.useMemo(() => {
+    return videoUrl && (videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be"));
+  }, [videoUrl]);
+
+  const youtubeThumbnail = React.useMemo(() => {
+    if (!isYoutube || !videoUrl) return null;
+    try {
+      const urlObj = new URL(videoUrl);
+      const videoId = urlObj.searchParams.get("v");
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`; // Try maxres first
+      }
+    } catch (e) {
+      console.error("Error extracting YouTube ID:", e);
+    }
+    return null;
+  }, [isYoutube, videoUrl]);
+
+  // Fallback to high quality if maxres fails - handling this in UI via error handler would be complex,
+  // usually hqdefault is safe backup but lets stick to simple logic or just use hqdefault which is always there.
+  // Actually, maxresdefault might not exist for all videos. hqdefault is safer.
+  const youtubeThumbnailSafe = React.useMemo(() => {
+    if (!isYoutube || !videoUrl) return null;
+    try {
+      const urlObj = new URL(videoUrl);
+      const videoId = urlObj.searchParams.get("v");
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      }
+    } catch (e) { }
+    return null;
+  }, [isYoutube, videoUrl]);
+
   // Auto-hide controls when playing
   useEffect(() => {
     if (playing) {
@@ -352,6 +385,13 @@ const TrainingProgramWatch = () => {
   // Play video in embedded player (works for both direct files and YouTube)
   const handlePlayVideo = () => {
     console.log("Training handlePlayVideo called");
+
+    if (isYoutube && videoUrl) {
+      window.open(videoUrl, "_blank");
+      handlevideoWatchCompleted();
+      return;
+    }
+
     setPlaying(true);
 
     if (playerRef.current) {
@@ -366,6 +406,11 @@ const TrainingProgramWatch = () => {
   };
 
   const handleTogglePlay = () => {
+    if (isYoutube && videoUrl) {
+      handlePlayVideo();
+      return;
+    }
+
     const nextPlaying = !playing;
     setPlaying(nextPlaying);
 
@@ -565,8 +610,8 @@ const TrainingProgramWatch = () => {
                 } bg-gray-900 relative`}
               {...videoContainerProps}
             >
-              {data?.data?.training?.training_video?.video_path ||
-                data?.data?.training?.training_video?.youtube_link ? (
+              {(data?.data?.training?.training_video?.video_path ||
+                data?.data?.training?.training_video?.youtube_link) && !isYoutube ? (
                 <ReactPlayerAny
                   ref={playerRef}
                   url={videoUrl as any}
@@ -620,6 +665,21 @@ const TrainingProgramWatch = () => {
                   }}
                   style={{ background: 'black' }}
                 />
+              ) : (data?.data?.training?.training_video?.video_path ||
+                data?.data?.training?.training_video?.youtube_link) && isYoutube ? (
+                <div
+                  className="absolute inset-0 flex items-center justify-center text-white text-lg bg-black bg-cover bg-center"
+                  style={{
+                    backgroundImage: youtubeThumbnailSafe ? `url(${youtubeThumbnailSafe})` : 'none',
+                  }}
+                >
+                  {!youtubeThumbnailSafe && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      {/* Detailed placeholder if no thumbnail */}
+                      <span className="text-sm text-gray-400">Preview not available</span>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available
