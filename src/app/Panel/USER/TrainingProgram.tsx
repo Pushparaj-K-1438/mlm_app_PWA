@@ -387,43 +387,15 @@ const TrainingProgramWatch = () => {
     console.log("Training handlePlayVideo called");
 
     if (isYoutube && videoUrl) {
-      // Attempt to force open in YouTube App on Mobile (Android Intent)
-      try {
-        let videoId = "";
-        try {
-          const urlObj = new URL(videoUrl);
-          videoId = urlObj.searchParams.get("v") || "";
-        } catch (e) { }
+      // Use a hidden anchor tag to trigger navigation
+      const link = document.createElement('a');
+      link.href = videoUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        if (!videoId) {
-          const match = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\n?#]+)/);
-          if (match) videoId = match[1];
-        }
-
-        if (videoId) {
-          const userAgent = navigator.userAgent.toLowerCase();
-          const isAndroid = userAgent.indexOf("android") > -1;
-
-          if (isAndroid) {
-            // Try vnd.youtube scheme which is specifically for the YouTube app
-            const deepLink = `vnd.youtube:${videoId}`;
-            window.location.href = deepLink;
-
-            setTimeout(() => {
-              if (!document.hidden) {
-                window.open(videoUrl, "_blank");
-              }
-            }, 1000);
-
-            handlevideoWatchCompleted();
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Error handling mobile YouTube redirect:", e);
-      }
-
-      window.open(videoUrl, "_blank");
       handlevideoWatchCompleted();
       return;
     }
