@@ -261,8 +261,8 @@ const Lib = {
 
     /**
      * Opens YouTube video in the native YouTube app
-     * Uses Android intent URL scheme (vnd.youtube) which triggers native app
-     * Falls back to opening in browser if native app not available
+     * Uses platform-specific schemes (vnd.youtube / youtube://) to force app launch
+     * preventing the PWA from opening it internally.
      * @param {string} youtubeUrl - YouTube URL to open
      * @returns {boolean} true if attempted to open
      */
@@ -272,23 +272,33 @@ const Lib = {
         const videoId = this.extractYouTubeVideoId(youtubeUrl);
 
         if (!videoId) {
-            // If we can't extract video ID, just open the URL externally
             window.open(youtubeUrl, '_blank');
             return true;
         }
 
-        // Standard YouTube watch URL - Android will open this in YouTube app if installed
-        const youtubeWatchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const isAndroid = /android/i.test(navigator.userAgent);
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-        // Create a link and click it - this triggers Android's app chooser/intent system
-        const link = document.createElement('a');
-        link.href = youtubeWatchUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (isAndroid) {
+            // 'vnd.youtube:' scheme is the standard Android way to launch the app
+            // Using location.href triggers the OS to handle the scheme
+            window.location.href = `vnd.youtube:${videoId}`;
+            return true;
+        }
 
+        if (isIOS) {
+            // iOS youtube:// scheme
+            window.location.href = `youtube://watch?v=${videoId}`;
+
+            // Fallback to web after a delay if app is not installed
+            setTimeout(() => {
+                window.location.href = `https://www.youtube.com/watch?v=${videoId}`;
+            }, 500);
+            return true;
+        }
+
+        // Desktop/Other - Open in new tab
+        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
         return true;
     },
 
