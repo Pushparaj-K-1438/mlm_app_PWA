@@ -16,6 +16,7 @@ import {
   BookOpen,
   Award,
   Target,
+  ExternalLink,
 } from "lucide-react";
 import { useActionCall, useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
@@ -380,17 +381,9 @@ const TrainingProgramWatch = () => {
     );
   }
 
-  // Play video in embedded player (works for direct files) or open YouTube app
+  // Play video in embedded player (works for both direct files and YouTube)
   const handlePlayVideo = () => {
     console.log("Training handlePlayVideo called");
-
-    // If it's a YouTube video, open in native YouTube app
-    if (isYoutube && videoUrl) {
-      Lib.openYouTubeNativeApp(videoUrl);
-      return;
-    }
-
-    // For non-YouTube videos, play in embedded player
     setPlaying(true);
 
     if (playerRef.current) {
@@ -405,12 +398,6 @@ const TrainingProgramWatch = () => {
   };
 
   const handleTogglePlay = () => {
-    // If it's a YouTube video, open in native YouTube app
-    if (isYoutube && videoUrl) {
-      Lib.openYouTubeNativeApp(videoUrl);
-      return;
-    }
-
     const nextPlaying = !playing;
     setPlaying(nextPlaying);
 
@@ -794,6 +781,16 @@ const TrainingProgramWatch = () => {
                   {data?.data?.training?.training_video?.description}
                 </p>
 
+                {/* Open in YouTube App Button */}
+                {isYoutube && videoUrl && (
+                  <button
+                    onClick={() => Lib.openYouTubeNativeApp(videoUrl)}
+                    className="w-full flex items-center justify-center px-6 py-3 mb-4 bg-red-600 text-white font-semibold rounded-xl shadow-md hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500/50 transition-all"
+                  >
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Open in YouTube App
+                  </button>
+                )}
 
                 {data?.data?.training?.status == 1 &&
                   data?.data?.training?.training_video?.quiz?.id && (

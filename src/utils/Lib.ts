@@ -277,18 +277,37 @@ const Lib = {
             return true;
         }
 
-        // Standard YouTube watch URL - Android will open this in YouTube app if installed
-        const youtubeWatchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        // Check if running on Android (PWA on Android)
+        const isAndroid = /android/i.test(navigator.userAgent);
 
-        // Create a link and click it - this triggers Android's app chooser/intent system
-        const link = document.createElement('a');
-        link.href = youtubeWatchUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (isAndroid) {
+            // Android Intent URL scheme for YouTube native app
+            // vnd.youtube:VIDEO_ID opens directly in YouTube app
+            const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;end`;
 
+            // Alternative: Direct YouTube app scheme (works on most Android devices)
+            const youtubeAppUrl = `vnd.youtube://${videoId}`;
+
+            // Try the YouTube app URL first
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = youtubeAppUrl;
+            document.body.appendChild(iframe);
+
+            // Clean up and fallback to intent URL after a short delay
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                // If app didn't open (still on page), try web fallback
+                window.location.href = intentUrl;
+            }, 1000);
+
+            return true;
+        }
+
+        // For iOS or other platforms, open in a new tab/window
+        // iOS will prompt to open in YouTube app if installed
+        const webUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        window.open(webUrl, '_blank');
         return true;
     },
 
