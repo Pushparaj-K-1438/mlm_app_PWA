@@ -21,6 +21,7 @@ import {
   Target,
   Video,
   Gift,
+  ExternalLink,
 } from "lucide-react";
 import { SERVICE } from "@/constants/services";
 import { useActionCall, useGetCall } from "@/hooks";
@@ -784,6 +785,17 @@ function PromotionVideosPage() {
                 <p className="text-gray-600 mb-4">
                   {data?.data?.promotion_video?.description}
                 </p>
+
+                {/* Open in YouTube App Button */}
+                {isYoutube && videoUrl && (
+                  <button
+                    onClick={() => Lib.openYouTubeNativeApp(videoUrl)}
+                    className="w-full flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-xl shadow-md hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500/50 transition-all"
+                  >
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Open in YouTube App
+                  </button>
+                )}
               </div>
             </div>
           )}
