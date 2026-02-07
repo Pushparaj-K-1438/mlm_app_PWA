@@ -21,7 +21,6 @@ import {
   Target,
   Video,
   Gift,
-  ExternalLink,
 } from "lucide-react";
 import { SERVICE } from "@/constants/services";
 import { useActionCall, useGetCall } from "@/hooks";
@@ -315,55 +314,18 @@ function PromotionVideosPage() {
     }
   };
 
-  // Play video in embedded player (works for both direct files and YouTube)
+  // Play video in embedded player (works for direct files) or open YouTube app
   const handlePlayVideo = () => {
     console.log("Promotion handlePlayVideo called");
 
+    // If it's a YouTube video, open in native YouTube app
     if (isYoutube && videoUrl) {
-      // For promotional YouTube videos, open in YouTube app (for packaged PWA apps)
-      // Extract video ID
-      let videoId = '';
-      try {
-        const urlObj = new URL(videoUrl);
-        videoId = urlObj.searchParams.get('v') || '';
-      } catch (e) {
-        if (videoUrl.includes('/shorts/')) {
-          videoId = videoUrl.split('/shorts/')[1]?.split('?')[0] || '';
-        } else if (videoUrl.includes('youtu.be/')) {
-          videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0] || '';
-        }
-      }
-
-      if (videoId) {
-        // Use YouTube deep link that works in both browser and packaged PWA apps
-        // This format will open YouTube app on both iOS and Android
-        const deepLinkUrl = `https://www.youtube.com/watch?v=${videoId}`;
-
-        // Create anchor and click it - this method works best in WebView/PWA
-        const link = document.createElement('a');
-        link.href = deepLinkUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        // Add click attribute to indicate this is a user action
-        link.setAttribute('data-youtube-deeplink', 'true');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // Fallback to original URL
-        const link = document.createElement('a');
-        link.href = videoUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
+      Lib.openYouTubeNativeApp(videoUrl);
       handlevideoWatchCompleted();
       return;
     }
 
+    // For non-YouTube videos, play in embedded player
     setPlaying(true);
 
     if (playerRef.current) {
@@ -785,17 +747,6 @@ function PromotionVideosPage() {
                 <p className="text-gray-600 mb-4">
                   {data?.data?.promotion_video?.description}
                 </p>
-
-                {/* Open in YouTube App Button */}
-                {isYoutube && videoUrl && (
-                  <button
-                    onClick={() => Lib.openYouTubeNativeApp(videoUrl)}
-                    className="w-full flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-xl shadow-md hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500/50 transition-all"
-                  >
-                    <ExternalLink className="w-5 h-5 mr-2" />
-                    Open in YouTube App
-                  </button>
-                )}
               </div>
             </div>
           )}
