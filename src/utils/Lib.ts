@@ -280,9 +280,11 @@ const Lib = {
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
         if (isAndroid) {
-            // 'vnd.youtube:' scheme is the standard Android way to launch the app
-            // Using location.href triggers the OS to handle the scheme
-            window.location.href = `vnd.youtube:${videoId}`;
+            // "vnd.youtube" and "intent" schemes fail in this environment (ERR_UNKNOWN_URL_SCHEME)
+            // We use standard https with _blank, which suggests to the OS/Browser to open a new context
+            // This is the most compatible way to attempt triggering the native app (via App Links)
+            // without causing a crash/error page.
+            window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
             return true;
         }
 
