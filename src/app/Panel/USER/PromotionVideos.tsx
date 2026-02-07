@@ -735,12 +735,12 @@ function PromotionVideosPage() {
                       <p className="text-sm opacity-90">Come back after watching</p>
                     </div>
                   </div>
-                  <div className="text-center">
+                  {/* <div className="text-center">
                     <div className="text-3xl font-bold">
                       {formatRemainingTime(youtubeWatchRemaining)}
                     </div>
                     <div className="text-xs opacity-75">remaining</div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
