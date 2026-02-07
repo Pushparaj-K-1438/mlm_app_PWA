@@ -319,9 +319,65 @@ function PromotionVideosPage() {
     console.log("Promotion handlePlayVideo called");
 
     if (isYoutube && videoUrl) {
-      // For promotional YouTube videos, open in YouTube app or browser
-      // Using window.location.href works best for mobile - it will prompt to open in app
-      window.location.href = videoUrl;
+      // For promotional YouTube videos, open directly in YouTube app
+      let videoId = '';
+      try {
+        const urlObj = new URL(videoUrl);
+        videoId = urlObj.searchParams.get('v') || '';
+      } catch (e) {
+        // Fallback: try to extract from shorts or youtu.be format
+        if (videoUrl.includes('/shorts/')) {
+          videoId = videoUrl.split('/shorts/')[1]?.split('?')[0] || '';
+        } else if (videoUrl.includes('youtu.be/')) {
+          videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0] || '';
+        }
+      }
+
+      if (videoId) {
+        // Detect if Android
+        const isAndroid = /Android/i.test(navigator.userAgent);
+
+        if (isAndroid) {
+          // Use Android Intent to open directly in YouTube app
+          // This will open the app OR redirect to Play Store if not installed
+          const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;end`;
+          const fallbackUrl = `https://play.google.com/store/apps/details?id=com.google.android.youtube`;
+
+          // Try intent first
+          window.location.href = intentUrl;
+
+          // If app not installed, redirect to Play Store after a short delay
+          setTimeout(() => {
+            // Check if we're still on the same page (app didn't open)
+            const link = document.createElement('a');
+            link.href = fallbackUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }, 1500);
+        } else {
+          // iOS: Use youtube:// scheme to open directly in app
+          const appUrl = `youtube://www.youtube.com/watch?v=${videoId}`;
+          const webUrl = videoUrl;
+
+          // Try to open in app first
+          const startTime = Date.now();
+          window.location.href = appUrl;
+
+          // Fallback to web if app doesn't open (after 2 seconds)
+          setTimeout(() => {
+            if (Date.now() - startTime < 2500) {
+              // App didn't open, use web URL
+              window.location.href = webUrl;
+            }
+          }, 2000);
+        }
+      } else {
+        // Fallback to direct URL if video ID extraction fails
+        window.location.href = videoUrl;
+      }
 
       handlevideoWatchCompleted();
       return;
