@@ -70,12 +70,16 @@ function PromotionVideosPage() {
   const [isMuted, setIsMuted] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // YouTube video watch time tracking - use actual video duration
-  // Default to 5 minutes if duration not available
+  // YouTube video watch time tracking
+  // Duration will be fetched from YouTube using ReactPlayer
+  const [youtubeVideoDuration, setYoutubeVideoDuration] = useState<number>(5 * 60 * 1000); // Default 5 min
+  const [isFetchingDuration, setIsFetchingDuration] = useState(false);
+  const hiddenPlayerRef = useRef<any>(null);
+
   const getVideoDuration = () => {
-    const videoDurationSeconds = data?.data?.promotion_video?.duration;
-    return videoDurationSeconds ? videoDurationSeconds * 1000 : 5 * 60 * 1000; // Use video duration or default 5 mins
+    return youtubeVideoDuration;
   };
+
   const youtubeWatchStartTimeRef = useRef<number | null>(null);
   const [youtubeWatchRemaining, setYoutubeWatchRemaining] = useState<number | null>(null);
   const youtubeCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -150,6 +154,23 @@ function PromotionVideosPage() {
 
     if (!videoId) return;
 
+    // Fetch YouTube video duration on mount
+    if (isYoutube && videoUrl) {
+      const videoIdMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
+      if (videoIdMatch) {
+        const youtubeVideoId = videoIdMatch[1];
+        const cachedDuration = localStorage.getItem(`youtube_duration_${youtubeVideoId}`);
+
+        if (cachedDuration) {
+          // Use cached duration
+          setYoutubeVideoDuration(parseInt(cachedDuration));
+        } else {
+          // Duration not cached - will be fetched by hidden player
+          console.log("Fetching YouTube video duration for:", youtubeVideoId);
+        }
+      }
+    }
+
     const storageKey = `youtube_watch_start_${videoId}`;
     const videoDuration = getVideoDuration();
 
@@ -198,7 +219,7 @@ function PromotionVideosPage() {
         clearInterval(youtubeCheckIntervalRef.current);
       }
     };
-  }, [data?.data?.promotion_video?.id]);
+  }, [data?.data?.promotion_video?.id, isYoutube, videoUrl, getVideoDuration]);
 
   // Handle fullscreen change
   useEffect(() => {
@@ -424,7 +445,7 @@ function PromotionVideosPage() {
         // Add special parameter so Android MainActivity.kt can identify and redirect to YouTube app
         const deepLinkUrl = `https://www.youtube.com/watch?v=${videoId}&promo_open=1`;
 
-        // Store the start time in localStorage for 10-minute tracking
+        // Store the start time in localStorage for tracking
         const storageKey = `youtube_watch_start_${data?.data?.promotion_video?.id}`;
         const existingStartTime = localStorage.getItem(storageKey);
 
@@ -434,7 +455,10 @@ function PromotionVideosPage() {
           youtubeWatchStartTimeRef.current = Date.now();
         }
 
-        // Show info message
+        // Show info message with video duration
+        const durationSeconds = Math.round(getVideoDuration() / 1000);
+        const timeDisplay = formatTime(durationSeconds);
+
         Swal.fire({
           icon: "info",
           title: "Watch Complete Video",
@@ -443,7 +467,7 @@ function PromotionVideosPage() {
               Video will open in YouTube app.
             </p>
             <p style="font-size: 13px; color: #888; margin-top: 10px;">
-              After watching complete video, come back to take the quiz.
+              After watching complete video (${timeDisplay}), come back to take the quiz.
             </p>
           `,
           confirmButtonText: "OK",
@@ -473,7 +497,7 @@ function PromotionVideosPage() {
         document.body.removeChild(link);
       }
 
-      // NOTE: handlevideoWatchCompleted() will be called after 10 minutes
+      // NOTE: handlevideoWatchCompleted() will be called after video duration completes
       // by the useEffect that checks localStorage
       return;
     }
@@ -488,6 +512,20 @@ function PromotionVideosPage() {
           else if (typeof internal.play === 'function') internal.play().catch(() => { });
         }
       } catch (e) { }
+    }
+  };
+
+  // Handle duration from hidden YouTube player
+  const handleHiddenPlayerDuration = (duration: number) => {
+    console.log("YouTube duration fetched:", duration);
+    const durationMs = Math.round(duration * 1000);
+    setYoutubeVideoDuration(durationMs);
+
+    // Cache in localStorage by video ID so we don't need to fetch again
+    const videoIdMatch = videoUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
+    if (videoIdMatch) {
+      const videoId = videoIdMatch[1];
+      localStorage.setItem(`youtube_duration_${videoId}`, durationMs.toString());
     }
   };
 
@@ -962,6 +1000,35 @@ function PromotionVideosPage() {
                   </li>
                 </ul>
               </div>
+            </div>
+          )}
+
+          {/* Hidden YouTube player to fetch video duration */}
+          {isYoutube && videoUrl && (
+            <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+              <ReactPlayerAny
+                ref={hiddenPlayerRef}
+                url={videoUrl}
+                width="1px"
+                height="1px"
+                playing={false}
+                controls={false}
+                onDuration={handleHiddenPlayerDuration}
+                config={{
+                  youtube: {
+                    playerVars: {
+                      autoplay: 0,
+                      controls: 0,
+                      disablekb: 1,
+                      fs: 0,
+                      playsinline: 1,
+                    },
+                    embedOptions: {
+                      host: 'https://www.youtube.com'
+                    }
+                  }
+                }}
+              />
             </div>
           )}
         </div>
