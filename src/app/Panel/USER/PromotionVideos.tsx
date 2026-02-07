@@ -319,55 +319,9 @@ function PromotionVideosPage() {
     console.log("Promotion handlePlayVideo called");
 
     if (isYoutube && videoUrl) {
-      // For promotional YouTube videos, redirect to mobile YouTube app
-      // Extract video ID from YouTube URL
-      let videoId = '';
-      try {
-        const urlObj = new URL(videoUrl);
-        videoId = urlObj.searchParams.get('v') || '';
-      } catch (e) {
-        // Fallback: try to extract from shorts or youtu.be format
-        if (videoUrl.includes('/shorts/')) {
-          videoId = videoUrl.split('/shorts/')[1]?.split('?')[0] || '';
-        } else if (videoUrl.includes('youtu.be/')) {
-          videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0] || '';
-        }
-      }
-
-      if (videoId) {
-        // Use vnd.youtube:// scheme to open in mobile YouTube app
-        const mobileAppUrl = `vnd.youtube://${videoId}`;
-        const webUrl = videoUrl;
-
-        // Try mobile app scheme first, fallback to web URL
-        const link = document.createElement('a');
-        link.href = mobileAppUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Small delay then try web URL as fallback (in case app is not installed)
-        setTimeout(() => {
-          const fallbackLink = document.createElement('a');
-          fallbackLink.href = webUrl;
-          fallbackLink.target = '_blank';
-          fallbackLink.rel = 'noopener noreferrer';
-          document.body.appendChild(fallbackLink);
-          fallbackLink.click();
-          document.body.removeChild(fallbackLink);
-        }, 500);
-      } else {
-        // Fallback to direct URL if video ID extraction fails
-        const link = document.createElement('a');
-        link.href = videoUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      // For promotional YouTube videos, open in YouTube app or browser
+      // Using window.location.href works best for mobile - it will prompt to open in app
+      window.location.href = videoUrl;
 
       handlevideoWatchCompleted();
       return;
