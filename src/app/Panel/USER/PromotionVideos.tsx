@@ -154,9 +154,12 @@ function PromotionVideosPage() {
 
     if (!videoId) return;
 
-    // Fetch YouTube video duration on mount
-    if (isYoutube && videoUrl) {
-      const videoIdMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
+    // Fetch YouTube video duration on mount (check if YouTube URL)
+    const urlCheck = data?.data?.promotion_video?.youtube_link || data?.data?.promotion_video?.video_path;
+    const isYoutubeVideo = urlCheck && (urlCheck.includes("youtube.com") || urlCheck.includes("youtu.be"));
+
+    if (isYoutubeVideo && urlCheck) {
+      const videoIdMatch = urlCheck.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
       if (videoIdMatch) {
         const youtubeVideoId = videoIdMatch[1];
         const cachedDuration = localStorage.getItem(`youtube_duration_${youtubeVideoId}`);
@@ -219,7 +222,7 @@ function PromotionVideosPage() {
         clearInterval(youtubeCheckIntervalRef.current);
       }
     };
-  }, [data?.data?.promotion_video?.id, isYoutube, videoUrl, getVideoDuration]);
+  }, [data?.data?.promotion_video?.id]);
 
   // Handle fullscreen change
   useEffect(() => {
