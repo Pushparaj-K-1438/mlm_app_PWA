@@ -215,7 +215,7 @@ const Lib = {
         const str = String(num);
         return `**${str.slice(-4)}`;
     },
-
+    
     /**
      * Formats a number to 2 decimal places
      * @param {number|string} amount - The amount to format
@@ -224,107 +224,6 @@ const Lib = {
     formatAmount(amount: number | string): string {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
         return isNaN(num) ? '0.00' : num.toFixed(2);
-    },
-
-    /**
-     * Extracts YouTube video ID from various YouTube URL formats
-     * @param {string} url - YouTube URL
-     * @returns {string|null} Video ID or null if not found
-     */
-    extractYouTubeVideoId(url: string): string | null {
-        if (!url) return null;
-
-        try {
-            // Handle youtu.be/VIDEO_ID format
-            if (url.includes('youtu.be/')) {
-                const match = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-                return match ? match[1] : null;
-            }
-
-            // Handle youtube.com/shorts/VIDEO_ID format
-            if (url.includes('/shorts/')) {
-                const match = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/);
-                return match ? match[1] : null;
-            }
-
-            // Handle youtube.com/watch?v=VIDEO_ID format
-            if (url.includes('youtube.com')) {
-                const urlObj = new URL(url);
-                return urlObj.searchParams.get('v');
-            }
-        } catch (e) {
-            console.error('Error extracting YouTube video ID:', e);
-        }
-
-        return null;
-    },
-
-    /**
-     * Opens YouTube video in the native YouTube app
-     * Uses Android intent URL scheme (vnd.youtube) which triggers native app
-     * Falls back to opening in browser if native app not available
-     * @param {string} youtubeUrl - YouTube URL to open
-     * @returns {boolean} true if attempted to open
-     */
-    openYouTubeNativeApp(youtubeUrl: string): boolean {
-        if (!youtubeUrl) return false;
-
-        const videoId = this.extractYouTubeVideoId(youtubeUrl);
-
-        if (!videoId) {
-            // If we can't extract video ID, just open the URL externally
-            window.open(youtubeUrl, '_blank');
-            return true;
-        }
-
-        // Check if running on Android (PWA on Android)
-        const isAndroid = /android/i.test(navigator.userAgent);
-
-        if (isAndroid) {
-            // Android Intent URL scheme for YouTube native app
-            // vnd.youtube:VIDEO_ID opens directly in YouTube app
-            const intentUrl = `intent://www.youtube.com/watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;end`;
-
-            // Alternative: Direct YouTube app scheme (works on most Android devices)
-            const youtubeAppUrl = `vnd.youtube://${videoId}`;
-
-            // Try the YouTube app URL first
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = youtubeAppUrl;
-            document.body.appendChild(iframe);
-
-            // Clean up and fallback to intent URL after a short delay
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-                // If app didn't open (still on page), try web fallback
-                window.location.href = intentUrl;
-            }, 1000);
-
-            return true;
-        }
-
-        // For iOS or other platforms, open in a new tab/window
-        // iOS will prompt to open in YouTube app if installed
-        const webUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        window.open(webUrl, '_blank');
-        return true;
-    },
-
-    /**
-     * Checks if device is likely Android
-     * @returns {boolean} true if Android
-     */
-    isAndroid(): boolean {
-        return /android/i.test(navigator.userAgent);
-    },
-
-    /**
-     * Checks if device is likely iOS
-     * @returns {boolean} true if iOS
-     */
-    isIOS(): boolean {
-        return /iphone|ipad|ipod/i.test(navigator.userAgent);
     }
 
 }
