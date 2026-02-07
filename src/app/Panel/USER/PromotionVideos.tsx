@@ -242,13 +242,10 @@ function PromotionVideosPage() {
     setDuration(duration);
   };
 
+  // Seeking is disabled - user cannot seek forward/backward
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const bounds = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - bounds.left) / bounds.width;
-
-    if (playerRef.current) {
-      playerRef.current.seekTo(percent, "fraction");
-    }
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const toggleFullscreen = async () => {
@@ -322,16 +319,55 @@ function PromotionVideosPage() {
     console.log("Promotion handlePlayVideo called");
 
     if (isYoutube && videoUrl) {
-      // Use a hidden anchor tag to trigger navigation
-      // This is often more reliable than window.open for triggering Android Intent filters
-      // and avoids the ERR_UNKNOWN_URL_SCHEME crash of direct scheme manipulation
-      const link = document.createElement('a');
-      link.href = videoUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // For promotional YouTube videos, redirect to mobile YouTube app
+      // Extract video ID from YouTube URL
+      let videoId = '';
+      try {
+        const urlObj = new URL(videoUrl);
+        videoId = urlObj.searchParams.get('v') || '';
+      } catch (e) {
+        // Fallback: try to extract from shorts or youtu.be format
+        if (videoUrl.includes('/shorts/')) {
+          videoId = videoUrl.split('/shorts/')[1]?.split('?')[0] || '';
+        } else if (videoUrl.includes('youtu.be/')) {
+          videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0] || '';
+        }
+      }
+
+      if (videoId) {
+        // Use vnd.youtube:// scheme to open in mobile YouTube app
+        const mobileAppUrl = `vnd.youtube://${videoId}`;
+        const webUrl = videoUrl;
+
+        // Try mobile app scheme first, fallback to web URL
+        const link = document.createElement('a');
+        link.href = mobileAppUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Small delay then try web URL as fallback (in case app is not installed)
+        setTimeout(() => {
+          const fallbackLink = document.createElement('a');
+          fallbackLink.href = webUrl;
+          fallbackLink.target = '_blank';
+          fallbackLink.rel = 'noopener noreferrer';
+          document.body.appendChild(fallbackLink);
+          fallbackLink.click();
+          document.body.removeChild(fallbackLink);
+        }, 500);
+      } else {
+        // Fallback to direct URL if video ID extraction fails
+        const link = document.createElement('a');
+        link.href = videoUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
 
       handlevideoWatchCompleted();
       return;
@@ -704,13 +740,9 @@ function PromotionVideosPage() {
 
                   {/* Bottom Controls */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-auto">
-                    {/* Progress Bar */}
+                    {/* Progress Bar - seeking disabled */}
                     <div
-                      className="h-1 bg-white bg-opacity-30 rounded-full cursor-pointer overflow-hidden mb-3"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSeek(e);
-                      }}
+                      className="h-1 bg-white bg-opacity-30 rounded-full overflow-hidden mb-3"
                     >
                       <div
                         className="h-full bg-blue-500 rounded-full transition-all duration-200"

@@ -242,12 +242,10 @@ const TrainingProgramWatch = () => {
     setDuration(d);
   };
 
+  // Seeking is disabled - user cannot seek forward/backward
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const bounds = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - bounds.left) / bounds.width;
-    const seekTime = percent * duration;
-
-    playerRef.current?.seekTo(seekTime);
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const toggleFullscreen = async () => {
@@ -385,21 +383,6 @@ const TrainingProgramWatch = () => {
   // Play video in embedded player (works for both direct files and YouTube)
   const handlePlayVideo = () => {
     console.log("Training handlePlayVideo called");
-
-    if (isYoutube && videoUrl) {
-      // Use a hidden anchor tag to trigger navigation
-      const link = document.createElement('a');
-      link.href = videoUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      handlevideoWatchCompleted();
-      return;
-    }
-
     setPlaying(true);
 
     if (playerRef.current) {
@@ -414,11 +397,6 @@ const TrainingProgramWatch = () => {
   };
 
   const handleTogglePlay = () => {
-    if (isYoutube && videoUrl) {
-      handlePlayVideo();
-      return;
-    }
-
     const nextPlaying = !playing;
     setPlaying(nextPlaying);
 
@@ -619,7 +597,7 @@ const TrainingProgramWatch = () => {
               {...videoContainerProps}
             >
               {(data?.data?.training?.training_video?.video_path ||
-                data?.data?.training?.training_video?.youtube_link) && !isYoutube ? (
+                data?.data?.training?.training_video?.youtube_link) ? (
                 <ReactPlayerAny
                   ref={playerRef}
                   url={videoUrl as any}
@@ -673,21 +651,6 @@ const TrainingProgramWatch = () => {
                   }}
                   style={{ background: 'black' }}
                 />
-              ) : (data?.data?.training?.training_video?.video_path ||
-                data?.data?.training?.training_video?.youtube_link) && isYoutube ? (
-                <div
-                  className="absolute inset-0 flex items-center justify-center text-white text-lg bg-black bg-cover bg-center"
-                  style={{
-                    backgroundImage: youtubeThumbnailSafe ? `url(${youtubeThumbnailSafe})` : 'none',
-                  }}
-                >
-                  {!youtubeThumbnailSafe && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                      {/* Detailed placeholder if no thumbnail */}
-                      <span className="text-sm text-gray-400">Preview not available</span>
-                    </div>
-                  )}
-                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available
@@ -753,13 +716,9 @@ const TrainingProgramWatch = () => {
 
                   {/* Bottom Controls */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-auto">
-                    {/* Progress Bar */}
+                    {/* Progress Bar - seeking disabled */}
                     <div
-                      className="h-1 bg-white bg-opacity-30 rounded-full cursor-pointer overflow-hidden mb-3"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSeek(e);
-                      }}
+                      className="h-1 bg-white bg-opacity-30 rounded-full overflow-hidden mb-3"
                     >
                       <div
                         className="h-full bg-blue-500 rounded-full transition-all duration-200"

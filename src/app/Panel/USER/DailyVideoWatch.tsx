@@ -13,9 +13,14 @@ import {
 import { useActionCall, useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
+import ReactPlayer from "react-player";
+const ReactPlayerAny = ReactPlayer as any;
 import UIHelpers from "@/utils/UIhelper";
 import Swal from "sweetalert2";
 import Lib from "@/utils/Lib";
+import {
+  getVideoPlayerConfig,
+} from "@/utils/videoPlayerConfig";
 
 interface DailyVideoWatchProps {
   onVideoWatched: () => void;
@@ -31,15 +36,7 @@ export default function DailyVideoWatch({
 
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const youTubePlayerRef = useRef<any>(null);
   const [playing, setPlayingRaw] = useState(false);
-  // Track maximum watched position to prevent seeking forward
-  const maxWatchedRef = useRef<number>(0);
-  // Time display state
-  const [currentVideoTime, setCurrentVideoTime] = useState(0);
-  const [totalDuration, setTotalDuration] = useState(0);
-  const [videoProgress, setVideoProgress] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
 
   const setPlaying = React.useCallback((val: boolean) => {
@@ -186,81 +183,7 @@ export default function DailyVideoWatch({
     return "";
   };
 
-  // Time tracking interval ref
-  const timeTrackingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Helper functions for time tracking (defined before YouTube useEffect)
-  const updateTimeDisplay = () => {
-    let currentTime = 0;
-    let duration = 0;
-
-    if (apiVideoUrl && (apiVideoUrl.includes("youtube.com") || apiVideoUrl.includes("youtu.be"))) {
-      // YouTube video
-      if (youTubePlayerRef.current) {
-        currentTime = youTubePlayerRef.current.getCurrentTime() || 0;
-        duration = youTubePlayerRef.current.getDuration() || 0;
-      }
-    } else {
-      // Uploaded file
-      if (videoRef.current) {
-        currentTime = videoRef.current.currentTime || 0;
-        duration = videoRef.current.duration || 0;
-      }
-    }
-
-    setCurrentVideoTime(currentTime);
-    setTotalDuration(duration);
-    if (duration > 0) {
-      setVideoProgress(currentTime / duration);
-    }
-  };
-
-  const updateProgressBar = (progress: number) => {
-    setVideoProgress(progress);
-  };
-
-  const startTimeTracking = () => {
-    stopTimeTracking();
-    timeTrackingIntervalRef.current = setInterval(() => {
-      updateTimeDisplay();
-    }, 250); // Update every 250ms for smoother display
-  };
-
-  const stopTimeTracking = () => {
-    if (timeTrackingIntervalRef.current) {
-      clearInterval(timeTrackingIntervalRef.current);
-      timeTrackingIntervalRef.current = null;
-    }
-  };
-
-  const handleTogglePlay = () => {
-    if (apiVideoUrl && (apiVideoUrl.includes("youtube.com") || apiVideoUrl.includes("youtu.be"))) {
-      // YouTube video
-      if (youTubePlayerRef.current) {
-        const YT = (window as any).YT;
-        const state = youTubePlayerRef.current.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) {
-          youTubePlayerRef.current.pauseVideo();
-        } else {
-          youTubePlayerRef.current.playVideo();
-        }
-      }
-    } else {
-      // Uploaded file
-      if (videoRef.current) {
-        if (videoRef.current.paused) {
-          videoRef.current.play();
-          setPlayingRaw(true);
-        } else {
-          videoRef.current.pause();
-          setPlayingRaw(false);
-        }
-      }
-    }
-  };
-
-  // Get video URL from API
-  const apiVideoUrl = React.useMemo(() => {
+  const videoUrl = React.useMemo(() => {
     const path = data?.data?.video_path;
     const link = data?.data?.youtube_link;
 
@@ -296,20 +219,6 @@ export default function DailyVideoWatch({
     return Lib.CloudPath(target);
   }, [data?.data?.video_path, data?.data?.youtube_link]);
 
-  // Convert to embed URL for iframe
-  const embedUrl = React.useMemo(() => {
-    if (!apiVideoUrl) return null;
-
-    // Check if it's a YouTube URL
-    const youtubeId = apiVideoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
-    if (youtubeId && youtubeId[1]) {
-      return `https://www.youtube.com/embed/${youtubeId[1]}?autoplay=0&controls=1&rel=0`;
-    }
-
-    // For non-YouTube videos (uploaded files), return as is
-    return apiVideoUrl;
-  }, [apiVideoUrl]);
-
   useEffect(() => {
     console.log("DEBUG: DailyVideoWatch MOUNTED");
     return () => console.log("DEBUG: DailyVideoWatch UNMOUNTED");
@@ -320,130 +229,211 @@ export default function DailyVideoWatch({
   }, [playing]);
 
   useEffect(() => {
-    if (embedUrl) {
-      console.log("DEBUG: embedUrl updated:", embedUrl);
+    if (videoUrl) {
+      console.log("DEBUG: videoUrl updated:", videoUrl);
     }
-  }, [embedUrl]);
+  }, [videoUrl]);
 
-  // Load YouTube IFrame API for YouTube videos
-  useEffect(() => {
-    if (!apiVideoUrl || (!apiVideoUrl.includes("youtube.com") && !apiVideoUrl.includes("youtu.be"))) {
-      return;
-    }
+  const playerConfig = React.useMemo(() => getVideoPlayerConfig(), []);
 
-    // Extract YouTube video ID
-    const youtubeId = apiVideoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-    if (!youtubeId || !youtubeId[1]) return;
+  // Track progress via onProgress callback
 
-    const videoId = youtubeId[1];
+  const handleProgress = React.useCallback((state: any) => {
 
-    // Load YouTube IFrame API if not already loaded
-    if (!(window as any).YT) {
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    }
+    setPlayed(state.played);
 
-    // Initialize YouTube player when API is ready
-    const onYouTubeIframeAPIReady = () => {
-      const playerId = `youtube-player-${data?.data?.id || 'daily'}`;
-      if (youTubePlayerRef.current) {
-        youTubePlayerRef.current.destroy();
-      }
+    setCurrentTime(state.playedSeconds);
 
-      youTubePlayerRef.current = new (window as any).YT.Player(playerId, {
-        videoId: videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-          fs: 0,
-          rel: 0,
-          iv_load_policy: 3,
-          modestbranding: 1,
-          playsinline: 1,
-        },
-        events: {
-          onReady: (event: any) => {
-            console.log("YouTube player ready");
-            updateTimeDisplay();
-          },
-          onStateChange: (event: any) => {
-            const YT = (window as any).YT;
-            if (event.data === YT.PlayerState.PLAYING) {
-              setPlayingRaw(true);
-              startTimeTracking();
-            } else if (event.data === YT.PlayerState.PAUSED) {
-              setPlayingRaw(false);
-              stopTimeTracking();
-            } else if (event.data === YT.PlayerState.ENDED) {
-              setPlayingRaw(false);
-              stopTimeTracking();
-              handlevideoWatchCompleted();
-            }
-          }
-        }
-      });
-    };
+  }, []);
 
-    // Check if API is already loaded
-    if ((window as any).YT && (window as any).YT.Player) {
-      onYouTubeIframeAPIReady();
-    } else {
-      (window as any).onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-    }
 
-    return () => {
-      if (youTubePlayerRef.current) {
-        youTubePlayerRef.current.destroy();
-        youTubePlayerRef.current = null;
-      }
-      stopTimeTracking();
-    };
-  }, [apiVideoUrl, data?.data?.id]);
 
-  // Start time tracking when video starts playing
-  useEffect(() => {
-    if (playing && videoRef.current && (!apiVideoUrl || (!apiVideoUrl.includes("youtube.com") && !apiVideoUrl.includes("youtu.be")))) {
-      startTimeTracking();
-    } else {
-      stopTimeTracking();
-    }
-    return () => stopTimeTracking();
-  }, [playing]);
+  const handleDuration = React.useCallback((duration: number) => {
+
+    setDuration(duration);
+
+  }, []);
+
+
+
+  // Seeking is disabled - user cannot seek forward/backward
+  const handleSeek = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+
 
   const toggleFullscreen = React.useCallback(async () => {
+
     const container = containerRef.current;
 
+
+
     if (!isFullscreen) {
-      // Enter fullscreen
-      if (container) {
-        try {
-          if (container.requestFullscreen) {
-            await container.requestFullscreen();
-          } else if ((container as any).webkitRequestFullscreen) {
-            await (container as any).webkitRequestFullscreen();
-          }
-        } catch (e) {
-          console.log("Native fullscreen failed, using CSS fallback");
-        }
-      }
-      setIsFullscreen(true);
-    } else {
-      // Exit fullscreen
+
+      // Try native Fullscreen API first (works in WebView)
+
       try {
-        if (document.exitFullscreen && document.fullscreenElement) {
-          await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen && (document as any).webkitFullscreenElement) {
-          await (document as any).webkitExitFullscreen();
+
+        if (container) {
+
+          if (container.requestFullscreen) {
+
+            await container.requestFullscreen();
+
+          } else if ((container as any).webkitRequestFullscreen) {
+
+            await (container as any).webkitRequestFullscreen();
+
+          } else if ((container as any).webkitEnterFullscreen) {
+
+            await (container as any).webkitEnterFullscreen();
+
+          }
+
         }
+
       } catch (e) {
-        console.log("Exit fullscreen failed");
+
+        // Native fullscreen not supported, CSS fallback will be used
+
       }
+
+
+
+      // Try to lock screen orientation to landscape
+
+      try {
+
+        if (screen.orientation && (screen.orientation as any).lock) {
+
+          await (screen.orientation as any).lock("landscape");
+
+        }
+
+      } catch (e) {
+
+        // Orientation lock not supported or failed
+
+      }
+
+
+
+      // Set state once after all attempts
+
+      setIsFullscreen(true);
+
+    } else {
+
+      // Exit native fullscreen
+
+      try {
+
+        if (document.fullscreenElement) {
+
+          await document.exitFullscreen();
+
+        } else if ((document as any).webkitFullscreenElement) {
+
+          await (document as any).webkitExitFullscreen();
+
+        }
+
+      } catch (e) {
+
+        // Native fullscreen exit failed
+
+      }
+
+
+
+      // Unlock screen orientation
+
+      try {
+
+        if (screen.orientation && screen.orientation.unlock) {
+
+          screen.orientation.unlock();
+
+        }
+
+      } catch (e) {
+
+        // Orientation unlock not supported
+
+      }
+
+
+
+      // Set state once after all attempts
+
       setIsFullscreen(false);
+
     }
+
   }, [isFullscreen]);
+
+
+
+  const toggleMute = React.useCallback(() => {
+
+    setIsMuted(prev => !prev);
+
+  }, []);
+
+
+
+  const handleVideoContainerClick = React.useCallback(() => {
+
+    if (playing) {
+
+      setShowControls(prev => !prev);
+
+    }
+
+  }, [playing]);
+
+
+
+  // Play video in embedded player (works for both direct files and YouTube)
+
+  const handlePlayVideo = React.useCallback(() => {
+    console.log("handlePlayVideo called, setting playing to true");
+    setPlaying(true);
+
+    // Direct call to internal player to ensure sync with user interaction
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (typeof internal.playVideo === 'function') internal.playVideo();
+          else if (typeof internal.play === 'function') internal.play().catch(() => { });
+        }
+      } catch (e) { }
+    }
+  }, []);
+
+  const handleTogglePlay = React.useCallback(() => {
+    const nextPlaying = !playing;
+    console.log("handleTogglePlay called, current state:", playing, "next state:", nextPlaying);
+    setPlaying(nextPlaying);
+
+    if (playerRef.current) {
+      try {
+        const internal = playerRef.current.getInternalPlayer();
+        if (internal) {
+          if (nextPlaying) {
+            if (typeof internal.playVideo === 'function') internal.playVideo();
+            else if (typeof internal.play === 'function') internal.play().catch(() => { });
+          } else {
+            if (typeof internal.pauseVideo === 'function') internal.pauseVideo();
+            else if (typeof internal.pause === 'function') internal.pause();
+          }
+        }
+      } catch (e) { }
+    }
+  }, [playing]);
 
   const handlevideoWatchCompleted = React.useCallback(async () => {
 
@@ -536,6 +526,7 @@ export default function DailyVideoWatch({
           : "relative mx-4 sm:mx-6 mt-6 rounded-2xl overflow-hidden"
           }`}
         ref={containerRef}
+        onClick={handleVideoContainerClick}
         style={isFullscreen ? {
           position: 'fixed',
           top: 0,
@@ -546,91 +537,136 @@ export default function DailyVideoWatch({
         } : undefined}
       >
         <div
-          ref={containerRef}
-          className={`${isFullscreen ? "fixed inset-0 z-50" : "w-full aspect-video"
+          className={`${isFullscreen ? "h-screen" : "aspect-video"
             } bg-gray-900 relative`}
-          style={{ minHeight: isFullscreen ? '100vh' : 'auto' }}
         >
-          {embedUrl ? (
-            <>
-              {apiVideoUrl && (apiVideoUrl.includes("youtube.com") || apiVideoUrl.includes("youtu.be")) ? (
-                // YouTube video - use div for YouTube IFrame API (controls=0, custom controls only)
-                <div className="absolute inset-0">
-                  <div
-                    id={`youtube-player-${data?.data?.id || 'daily'}`}
-                    className="w-full h-full"
-                  />
-                </div>
-              ) : (
-                // Uploaded file - use HTML5 video WITHOUT controls, custom controls only
-                <video
-                  key={embedUrl}
-                  ref={videoRef}
-                  src={embedUrl}
-                  className="absolute inset-0 w-full h-full"
-                  playsInline
-                  style={{ background: 'black' }}
-                  onLoadedMetadata={(e) => {
-                    setTotalDuration(e.currentTarget.duration || 0);
-                  }}
-                  onTimeUpdate={(e) => {
-                    const currentTime = e.currentTarget.currentTime;
-                    const duration = e.currentTarget.duration;
-                    // Track maximum watched position
-                    if (currentTime > maxWatchedRef.current) {
-                      maxWatchedRef.current = currentTime;
-                    }
-                    setCurrentVideoTime(currentTime);
-                    setTotalDuration(duration);
-                    if (duration > 0) {
-                      setVideoProgress(currentTime / duration);
-                    }
-                  }}
-                  onPlay={() => {
-                    setPlayingRaw(true);
-                    startTimeTracking();
-                  }}
-                  onPause={() => {
-                    setPlayingRaw(false);
-                    stopTimeTracking();
-                  }}
-                  onEnded={() => {
-                    setPlayingRaw(false);
-                    stopTimeTracking();
-                    if (videoRef.current && videoRef.current.currentTime > 0) {
-                      handlevideoWatchCompleted();
-                    }
-                  }}
-                />
-              )}
-            </>
+          {videoUrl ? (
+            <ReactPlayerAny
+              key={videoUrl}
+              ref={playerRef}
+              url={videoUrl}
+              width="100%"
+              height="100%"
+              controls={false}
+              playing={playing}
+              muted={isMuted}
+              playsinline={true}
+              onReady={() => {
+                console.log("=== DAILY VIDEO PLAYER READY ===");
+              }}
+              onStart={() => {
+                console.log("Video onStart event fired");
+                setHasStarted(true);
+              }}
+              onProgress={handleProgress as any}
+              onDuration={handleDuration}
+              onPlay={() => {
+                console.log("DEBUG: Native onPlay event fired");
+                setHasStarted(true);
+                if (!playing) setPlaying(true);
+              }}
+              onPause={() => {
+                console.log("DEBUG: Native onPause event fired");
+                if (playing) setPlaying(false);
+              }}
+              onError={(error: any) => {
+                console.error("ReactPlayer Error:", error);
+              }}
+              onEnded={() => {
+                console.log("DEBUG: onEnded event fired");
+                if (duration > 0 && currentTime > duration * 0.9) {
+                  handlevideoWatchCompleted();
+                } else if (duration === 0 && currentTime > 0) {
+                  handlevideoWatchCompleted();
+                } else {
+                  console.log("Video ended prematurely, not marking as watched");
+                  setPlaying(false);
+                }
+              }}
+              config={playerConfig as any}
+              style={{ background: 'black' }}
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
               No video source available
             </div>
           )}
 
-          {/* Custom Controls Overlay */}
-          {embedUrl && (
-            <div className="absolute inset-0 flex flex-col justify-end pointer-events-none">
-              {/* Center Play/Pause Button */}
-              <div className="flex-1 flex items-center justify-center pointer-events-auto">
-                {!playing && (
+          {/* Custom Play Button Overlay */}
+          {!hasStarted && !playing && videoUrl && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePlayVideo();
+                }}
+                className={`flex items-center justify-center w-20 h-20 rounded-full text-white transition-all transform hover:scale-105 ${videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be")
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+              >
+                <Play className="w-8 h-8 ml-1" />
+              </button>
+            </div>
+          )}
+
+          {/* Controls Overlay - Show when playing and controls are visible */}
+          {showControls && videoUrl && (
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none">
+              {/* Top Controls */}
+              <div className="flex justify-between items-center p-4 pointer-events-auto">
+                <div className="text-white">
+                  <h3 className="font-medium">{data?.data?.title}</h3>
+                </div>
+                <div className="flex space-x-2">
                   <button
-                    onClick={handleTogglePlay}
-                    className="flex items-center justify-center w-20 h-20 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-all transform hover:scale-105"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMute();
+                    }}
+                    className="flex items-center justify-center w-10 h-10 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full text-white transition-colors"
                   >
-                    <Play className="w-8 h-8 ml-1" />
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
                   </button>
-                )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFullscreen();
+                    }}
+                    className="flex items-center justify-center w-10 h-10 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full text-white transition-colors"
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="w-5 h-5" />
+                    ) : (
+                      <Maximize2 className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Bottom Controls Bar */}
-              <div className="bg-gradient-to-t from-black/80 to-transparent p-4 pointer-events-auto">
+              {/* Bottom Controls */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-auto">
+                {/* Progress Bar */}
+                <div
+                  className="h-1 bg-white bg-opacity-30 rounded-full overflow-hidden mb-3"
+                >
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all duration-200"
+                    style={{ width: `${played * 100}%` }}
+                  ></div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   {/* Play/Pause Button */}
                   <button
-                    onClick={handleTogglePlay}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTogglePlay();
+                    }}
                     className="flex items-center justify-center w-12 h-12 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors"
                   >
                     {playing ? (
@@ -643,38 +679,13 @@ export default function DailyVideoWatch({
                     )}
                   </button>
 
-                  {/* Time Display (read-only, no seek) */}
-                  <div className="flex items-center text-sm text-white">
+                  {/* Time Display */}
+                  <div className="flex items-center text-sm text-white font-medium">
                     <Clock className="w-4 h-4 mr-1" />
-                    <span>{formatTime(currentVideoTime)} / {formatTime(totalDuration)}</span>
+                    <span>
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
                   </div>
-
-                  {/* Fullscreen Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFullscreen();
-                    }}
-                    className="flex items-center justify-center w-10 h-10 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors"
-                  >
-                    {isFullscreen ? (
-                      <Minimize2 className="w-5 h-5" />
-                    ) : (
-                      <Maximize2 className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Progress Bar - Read-only (no click to seek) */}
-                <div className="mt-3 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 transition-all duration-200" style={{ width: `${videoProgress * 100}%` }}></div>
-                </div>
-              </div>
-
-              {/* Top Title Bar */}
-              <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start bg-gradient-to-b from-black/70 to-transparent pointer-events-auto">
-                <div className="text-white">
-                  <h3 className="font-medium text-lg">{data?.data?.title || 'Daily Video'}</h3>
                 </div>
               </div>
             </div>
