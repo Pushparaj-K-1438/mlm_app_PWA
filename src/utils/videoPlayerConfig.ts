@@ -13,9 +13,9 @@ export const getVideoPlayerConfig = () => ({
   youtube: {
     playerVars: {
       autoplay: 0, // Don't autoplay by default, let ReactPlayer control it
-      controls: 1, // Show YouTube controls
-      disablekb: 0, // Enable keyboard controls
-      fs: 1, // Enable fullscreen button
+      controls: 0, // Hide YouTube controls (using custom controls, no seeking)
+      disablekb: 1, // Disable keyboard controls (prevents seeking with arrows)
+      fs: 0, // Disable fullscreen button (using custom fullscreen)
       rel: 0, // Don't show related videos
       iv_load_policy: 3, // Hide annotations
       modestbranding: 1, // Minimal YouTube branding

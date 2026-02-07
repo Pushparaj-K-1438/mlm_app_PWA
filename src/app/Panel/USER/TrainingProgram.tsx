@@ -613,7 +613,8 @@ const TrainingProgramWatch = () => {
                     youtube: {
                       playerVars: {
                         autoplay: 0,
-                        controls: 1,
+                        controls: 0, // Hide native controls (prevents seeking)
+                        disablekb: 1, // Disable keyboard controls (prevents seeking)
                         playsinline: 1,
                       },
                       embedOptions: {
