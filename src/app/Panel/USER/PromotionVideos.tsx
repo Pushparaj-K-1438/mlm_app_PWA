@@ -70,6 +70,17 @@ function PromotionVideosPage() {
   const [isMuted, setIsMuted] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // YouTube video watch time tracking - use actual video duration
+  // Default to 5 minutes if duration not available
+  const getVideoDuration = () => {
+    const videoDurationSeconds = data?.data?.promotion_video?.duration;
+    return videoDurationSeconds ? videoDurationSeconds * 1000 : 5 * 60 * 1000; // Use video duration or default 5 mins
+  };
+  const youtubeWatchStartTimeRef = useRef<number | null>(null);
+  const [youtubeWatchRemaining, setYoutubeWatchRemaining] = useState<number | null>(null);
+  const youtubeCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const completionTriggeredRef = useRef(false); // Ensure completion only triggers once
+
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -121,6 +132,73 @@ function PromotionVideosPage() {
       handleTakeQuiz();
     }
   }, []);
+
+  // Check YouTube watch time on component mount and interval
+  useEffect(() => {
+    const videoId = data?.data?.promotion_video?.id;
+
+    // Reset all state when video changes (important for new videos after quiz completion)
+    completionTriggeredRef.current = false;
+    setYoutubeWatchRemaining(null);
+    youtubeWatchStartTimeRef.current = null;
+
+    // Clear any existing interval
+    if (youtubeCheckIntervalRef.current) {
+      clearInterval(youtubeCheckIntervalRef.current);
+      youtubeCheckIntervalRef.current = null;
+    }
+
+    if (!videoId) return;
+
+    const storageKey = `youtube_watch_start_${videoId}`;
+    const videoDuration = getVideoDuration();
+
+    // Check if there's a stored start time for THIS video only
+    const checkWatchTime = () => {
+      const storedStartTime = localStorage.getItem(storageKey);
+      if (storedStartTime) {
+        const startTime = parseInt(storedStartTime);
+        const elapsed = Date.now() - startTime;
+        const remaining = videoDuration - elapsed;
+
+        if (remaining <= 0) {
+          // Video duration completed - clear storage and trigger completion
+          localStorage.removeItem(storageKey);
+          youtubeWatchStartTimeRef.current = null;
+          setYoutubeWatchRemaining(null);
+
+          // Only trigger completion once
+          if (!completionTriggeredRef.current) {
+            completionTriggeredRef.current = true;
+            handlevideoWatchCompleted();
+          }
+
+          // Clear interval if running
+          if (youtubeCheckIntervalRef.current) {
+            clearInterval(youtubeCheckIntervalRef.current);
+            youtubeCheckIntervalRef.current = null;
+          }
+        } else {
+          // Update remaining time
+          setYoutubeWatchRemaining(remaining);
+          youtubeWatchStartTimeRef.current = startTime;
+        }
+      }
+    };
+
+    // Check immediately on mount
+    checkWatchTime();
+
+    // Set up interval to check every second (for countdown display)
+    const interval = setInterval(checkWatchTime, 1000);
+    youtubeCheckIntervalRef.current = interval;
+
+    return () => {
+      if (youtubeCheckIntervalRef.current) {
+        clearInterval(youtubeCheckIntervalRef.current);
+      }
+    };
+  }, [data?.data?.promotion_video?.id]);
 
   // Handle fullscreen change
   useEffect(() => {
@@ -233,6 +311,14 @@ function PromotionVideosPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Format remaining milliseconds to MM:SS
+  const formatRemainingTime = (ms: number) => {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleProgress = (state: any) => {
     setPlayed(state.played);
     setCurrentTime(state.playedSeconds);
@@ -335,19 +421,47 @@ function PromotionVideosPage() {
 
       if (videoId) {
         // Use YouTube deep link that works in both browser and packaged PWA apps
-        // This format will open YouTube app on both iOS and Android
-        const deepLinkUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        // Add special parameter so Android MainActivity.kt can identify and redirect to YouTube app
+        const deepLinkUrl = `https://www.youtube.com/watch?v=${videoId}&promo_open=1`;
 
-        // Create anchor and click it - this method works best in WebView/PWA
-        const link = document.createElement('a');
-        link.href = deepLinkUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        // Add click attribute to indicate this is a user action
-        link.setAttribute('data-youtube-deeplink', 'true');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Store the start time in localStorage for 10-minute tracking
+        const storageKey = `youtube_watch_start_${data?.data?.promotion_video?.id}`;
+        const existingStartTime = localStorage.getItem(storageKey);
+
+        if (!existingStartTime) {
+          // First time clicking - store the start time
+          localStorage.setItem(storageKey, Date.now().toString());
+          youtubeWatchStartTimeRef.current = Date.now();
+        }
+
+        // Show info message
+        Swal.fire({
+          icon: "info",
+          title: "Watch Complete Video",
+          html: `
+            <p style="font-size: 14px; color: #666;">
+              Video will open in YouTube app.
+            </p>
+            <p style="font-size: 13px; color: #888; margin-top: 10px;">
+              After watching complete video, come back to take the quiz.
+            </p>
+          `,
+          confirmButtonText: "OK",
+          customClass: {
+            confirmButton:
+              "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
+          },
+        }).then(() => {
+          // After user acknowledges, open the YouTube link
+          const link = document.createElement('a');
+          link.href = deepLinkUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.setAttribute('data-youtube-deeplink', 'true');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
       } else {
         // Fallback to original URL
         const link = document.createElement('a');
@@ -359,7 +473,8 @@ function PromotionVideosPage() {
         document.body.removeChild(link);
       }
 
-      handlevideoWatchCompleted();
+      // NOTE: handlevideoWatchCompleted() will be called after 10 minutes
+      // by the useEffect that checks localStorage
       return;
     }
 
@@ -566,6 +681,29 @@ function PromotionVideosPage() {
               </div>
             </div>
           </div>
+
+          {/* YouTube Watch Countdown - Shows when user returns before video duration completes */}
+          {youtubeWatchRemaining !== null && (
+            <div className="px-6 mt-6">
+              <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Timer className="w-8 h-8 mr-3" />
+                    <div>
+                      <h3 className="font-semibold text-lg">Complete the Video</h3>
+                      <p className="text-sm opacity-90">Come back after watching</p>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">
+                      {formatRemainingTime(youtubeWatchRemaining)}
+                    </div>
+                    <div className="text-xs opacity-75">remaining</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Video Player Section */}
           <div
