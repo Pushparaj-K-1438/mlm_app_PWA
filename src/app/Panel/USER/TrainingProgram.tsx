@@ -31,6 +31,7 @@ import Error500 from "@/components/ui/Error500";
 import { LANG } from "@/constants/others";
 import {
   videoContainerProps,
+  handleVideoTap,
 } from "@/utils/videoPlayerConfig";
 
 const TrainingProgramWatch = () => {
@@ -320,6 +321,20 @@ const TrainingProgramWatch = () => {
     }
   };
 
+  // Prevent double-tap/seeking on YouTube videos
+  const handleVideoTouch = (e: React.TouchEvent | React.MouseEvent) => {
+    handleVideoTap(e, () => {
+      if (playing) {
+        setShowControls(!showControls);
+      }
+    });
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   if (loading) {
     return <Loader />;
   }
@@ -582,6 +597,9 @@ const TrainingProgramWatch = () => {
               }`}
             ref={containerRef}
             onClick={handleVideoContainerClick}
+            onTouchEnd={handleVideoTouch}
+            onDoubleClick={handleDoubleClick}
+            {...videoContainerProps}
             style={isFullscreen ? {
               position: 'fixed',
               top: 0,
@@ -598,60 +616,70 @@ const TrainingProgramWatch = () => {
             >
               {(data?.data?.training?.training_video?.video_path ||
                 data?.data?.training?.training_video?.youtube_link) ? (
-                <ReactPlayerAny
-                  ref={playerRef}
-                  url={videoUrl as any}
-                  width="100%"
-                  height="100%"
-                  controls={false}
-                  playing={playing}
-                  onProgress={handleProgress as any}
-                  onDuration={handleDuration}
-                  muted={isMuted}
-                  playsinline={true}
-                  config={{
-                    youtube: {
-                      playerVars: {
-                        autoplay: 0,
-                        controls: 0, // Hide native controls (prevents seeking)
-                        disablekb: 1, // Disable keyboard controls (prevents seeking)
-                        playsinline: 1,
-                      },
-                      embedOptions: {
-                        host: 'https://www.youtube.com'
+                <>
+                  <ReactPlayerAny
+                    ref={playerRef}
+                    url={videoUrl as any}
+                    width="100%"
+                    height="100%"
+                    controls={false}
+                    playing={playing}
+                    onProgress={handleProgress as any}
+                    onDuration={handleDuration}
+                    muted={isMuted}
+                    playsinline={true}
+                    config={{
+                      youtube: {
+                        playerVars: {
+                          autoplay: 0,
+                          controls: 0, // Hide native controls (prevents seeking)
+                          disablekb: 1, // Disable keyboard controls (prevents seeking)
+                          playsinline: 1,
+                        },
+                        embedOptions: {
+                          host: 'https://www.youtube.com'
+                        }
                       }
-                    }
-                  } as any}
-                  onReady={() => {
-                    console.log("=== TRAINING PLAYER READY ===");
-                  }}
-                  onStart={() => {
-                    console.log("Training video started playing");
-                  }}
-                  onPlay={() => {
-                    console.log("Training video onPlay fired");
-                    if (!playing) setPlaying(true);
-                  }}
-                  onPause={() => {
-                    console.log("Training video paused");
-                    if (playing) setPlaying(false);
-                  }}
-                  onEnded={() => {
-                    console.log("Training video onEnded fired");
-                    if (duration > 0 && currentTime > duration * 0.9) {
-                      handlevideoWatchCompleted();
-                    } else if (duration === 0 && currentTime > 0) {
-                      handlevideoWatchCompleted();
-                    } else {
-                      console.log("Training video ended prematurely, not marking as watched");
-                      setPlaying(false);
-                    }
-                  }}
-                  onError={(error: any, data?: any) => {
-                    console.error("Training ReactPlayer Error:", error);
-                  }}
-                  style={{ background: 'black' }}
-                />
+                    } as any}
+                    onReady={() => {
+                      console.log("=== TRAINING PLAYER READY ===");
+                    }}
+                    onStart={() => {
+                      console.log("Training video started playing");
+                    }}
+                    onPlay={() => {
+                      console.log("Training video onPlay fired");
+                      if (!playing) setPlaying(true);
+                    }}
+                    onPause={() => {
+                      console.log("Training video paused");
+                      if (playing) setPlaying(false);
+                    }}
+                    onEnded={() => {
+                      console.log("Training video onEnded fired");
+                      if (duration > 0 && currentTime > duration * 0.9) {
+                        handlevideoWatchCompleted();
+                      } else if (duration === 0 && currentTime > 0) {
+                        handlevideoWatchCompleted();
+                      } else {
+                        console.log("Training video ended prematurely, not marking as watched");
+                        setPlaying(false);
+                      }
+                    }}
+                    onError={(error: any, data?: any) => {
+                      console.error("Training ReactPlayer Error:", error);
+                    }}
+                    style={{ background: 'black' }}
+                  />
+                  {/* Transparent overlay to prevent YouTube double-tap seeking */}
+                  <div
+                    className="absolute inset-0"
+                    onTouchEnd={handleVideoTouch}
+                    onClick={handleVideoContainerClick}
+                    onDoubleClick={handleDoubleClick}
+                    style={{ touchAction: 'manipulation' }}
+                  />
+                </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
                   No video source available

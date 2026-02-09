@@ -20,6 +20,8 @@ import Swal from "sweetalert2";
 import Lib from "@/utils/Lib";
 import {
   getVideoPlayerConfig,
+  handleVideoTap,
+  videoContainerProps,
 } from "@/utils/videoPlayerConfig";
 
 interface DailyVideoWatchProps {
@@ -385,14 +387,24 @@ export default function DailyVideoWatch({
 
 
   const handleVideoContainerClick = React.useCallback(() => {
-
     if (playing) {
-
       setShowControls(prev => !prev);
-
     }
-
   }, [playing]);
+
+  // Prevent double-tap/seeking on YouTube videos
+  const handleVideoTouch = React.useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    handleVideoTap(e, () => {
+      if (playing) {
+        setShowControls(prev => !prev);
+      }
+    });
+  }, [playing]);
+
+  const handleDoubleClick = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
 
 
@@ -527,6 +539,9 @@ export default function DailyVideoWatch({
           }`}
         ref={containerRef}
         onClick={handleVideoContainerClick}
+        onTouchEnd={handleVideoTouch}
+        onDoubleClick={handleDoubleClick}
+        {...videoContainerProps}
         style={isFullscreen ? {
           position: 'fixed',
           top: 0,
@@ -541,51 +556,61 @@ export default function DailyVideoWatch({
             } bg-gray-900 relative`}
         >
           {videoUrl ? (
-            <ReactPlayerAny
-              key={videoUrl}
-              ref={playerRef}
-              url={videoUrl}
-              width="100%"
-              height="100%"
-              controls={false}
-              playing={playing}
-              muted={isMuted}
-              playsinline={true}
-              onReady={() => {
-                console.log("=== DAILY VIDEO PLAYER READY ===");
-              }}
-              onStart={() => {
-                console.log("Video onStart event fired");
-                setHasStarted(true);
-              }}
-              onProgress={handleProgress as any}
-              onDuration={handleDuration}
-              onPlay={() => {
-                console.log("DEBUG: Native onPlay event fired");
-                setHasStarted(true);
-                if (!playing) setPlaying(true);
-              }}
-              onPause={() => {
-                console.log("DEBUG: Native onPause event fired");
-                if (playing) setPlaying(false);
-              }}
-              onError={(error: any) => {
-                console.error("ReactPlayer Error:", error);
-              }}
-              onEnded={() => {
-                console.log("DEBUG: onEnded event fired");
-                if (duration > 0 && currentTime > duration * 0.9) {
-                  handlevideoWatchCompleted();
-                } else if (duration === 0 && currentTime > 0) {
-                  handlevideoWatchCompleted();
-                } else {
-                  console.log("Video ended prematurely, not marking as watched");
-                  setPlaying(false);
-                }
-              }}
-              config={playerConfig as any}
-              style={{ background: 'black' }}
-            />
+            <>
+              <ReactPlayerAny
+                key={videoUrl}
+                ref={playerRef}
+                url={videoUrl}
+                width="100%"
+                height="100%"
+                controls={false}
+                playing={playing}
+                muted={isMuted}
+                playsinline={true}
+                onReady={() => {
+                  console.log("=== DAILY VIDEO PLAYER READY ===");
+                }}
+                onStart={() => {
+                  console.log("Video onStart event fired");
+                  setHasStarted(true);
+                }}
+                onProgress={handleProgress as any}
+                onDuration={handleDuration}
+                onPlay={() => {
+                  console.log("DEBUG: Native onPlay event fired");
+                  setHasStarted(true);
+                  if (!playing) setPlaying(true);
+                }}
+                onPause={() => {
+                  console.log("DEBUG: Native onPause event fired");
+                  if (playing) setPlaying(false);
+                }}
+                onError={(error: any) => {
+                  console.error("ReactPlayer Error:", error);
+                }}
+                onEnded={() => {
+                  console.log("DEBUG: onEnded event fired");
+                  if (duration > 0 && currentTime > duration * 0.9) {
+                    handlevideoWatchCompleted();
+                  } else if (duration === 0 && currentTime > 0) {
+                    handlevideoWatchCompleted();
+                  } else {
+                    console.log("Video ended prematurely, not marking as watched");
+                    setPlaying(false);
+                  }
+                }}
+                config={playerConfig as any}
+                style={{ background: 'black' }}
+              />
+              {/* Transparent overlay to prevent YouTube double-tap seeking */}
+              <div
+                className="absolute inset-0"
+                onTouchEnd={handleVideoTouch}
+                onClick={handleVideoContainerClick}
+                onDoubleClick={handleDoubleClick}
+                style={{ touchAction: 'manipulation' }}
+              />
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-white text-lg">
               No video source available

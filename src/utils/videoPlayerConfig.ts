@@ -28,10 +28,46 @@ export const getVideoPlayerConfig = () => ({
   }
 });
 
+// Double-tap prevention for YouTube videos
+let tapTimeout: NodeJS.Timeout | null = null;
+let tapCount = 0;
+
+export const handleVideoTap = (e: React.MouseEvent | React.TouchEvent, callback?: () => void) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  tapCount++;
+
+  // Clear existing timeout
+  if (tapTimeout) {
+    clearTimeout(tapTimeout);
+  }
+
+  // If this is the second tap within 300ms, prevent it (YouTube double-tap seek)
+  if (tapCount === 2) {
+    tapCount = 0;
+    return;
+  }
+
+  // Reset tap count after delay
+  tapTimeout = setTimeout(() => {
+    tapCount = 0;
+    // Only execute callback on single tap
+    if (callback) {
+      callback();
+    }
+  }, 300);
+};
+
 export const videoContainerProps = {
   onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+  onDoubleClick: (e: React.MouseEvent) => {
+    // Prevent double-click seeking on YouTube
+    e.preventDefault();
+    e.stopPropagation();
+  },
   onTouchStart: (e: React.TouchEvent) => {
-    // Prevent long press menu on mobile
+    // Prevent long press menu on mobile and double-tap zoom
     if (e.touches.length === 1) {
       const target = e.target as HTMLElement;
       target.style.touchAction = 'none';
