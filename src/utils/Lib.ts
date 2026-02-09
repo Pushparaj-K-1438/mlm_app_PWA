@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import { ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 export const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE ?? "";
+export const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL ?? "https://starupworld.com";
 
 const Lib = {
 
@@ -209,6 +210,11 @@ const Lib = {
     getBaseURL() {
         const baseUrl = `${window.location.protocol}//${window.location.host}`;
         return baseUrl
+    },
+
+    getWebBaseURL() {
+        // Returns the main web app URL for referral links (registration happens here)
+        return WEB_APP_URL;
     },
 
     maskLast4Digits(num: string | number) {

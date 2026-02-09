@@ -76,12 +76,13 @@ const ScratchCardPage = () => {
 
     return (
       <div
-        className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
+        onClick={() => !isScratched && !isRevealed && handleScratchCard(card.scratch_card_id, card.id)}
+        className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl cursor-pointer ${
           isScratched
             ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50'
             : isRevealed
             ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50'
-            : 'border-gray-200 hover:border-blue-300'
+            : 'border-gray-200 hover:border-blue-300 active:scale-95'
         }`}
       >
         {/* Card Header */}
@@ -144,11 +145,11 @@ const ScratchCardPage = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
-                <Coins className="w-10 h-10 text-gray-500" />
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-200 to-yellow-300 rounded-full flex items-center justify-center">
+                <Coins className="w-10 h-10 text-yellow-600" />
               </div>
               <div className="text-gray-600 font-medium">
-                Click to Scratch
+                Tap to Scratch
               </div>
               <div className="text-xs text-gray-500">
                 Reveal your prize!

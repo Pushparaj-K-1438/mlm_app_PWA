@@ -50,11 +50,11 @@ function ReferralPage() {
 
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Mock data fallback for referral link
+  // Referral link - always uses web app URL (starupworld.com) for registration
   const mockReferralData = {
     referralLink: profileData?.data?.referral_code ?
-      `${Lib.getBaseURL()}/register?promoter_code=${profileData.data.referral_code}` :
-      `${Lib.getBaseURL()}/register?promoter_code=demo`
+      `${Lib.getWebBaseURL()}/register?promoter_code=${profileData.data.referral_code}` :
+      `${Lib.getWebBaseURL()}/register?promoter_code=demo`
   };
 
   const copyReferralLink = async () => {
@@ -71,8 +71,8 @@ function ReferralPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join PromoHub",
-          text: "Join me on PromoHub and start earning today!",
+          title: "Join StarupWorld",
+          text: "Transform Your Promotion Journey!",
           url: mockReferralData.referralLink,
         });
       } catch (err) {
@@ -229,8 +229,8 @@ function ReferralPage() {
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
               <input
                 type="text"
-                value={`${Lib.getBaseURL()}/register?promoter_code=${
-                  profileData?.data?.referral_code
+                value={`${Lib.getWebBaseURL()}/register?promoter_code=${
+                  profileData?.data?.referral_code || ""
                 }`}
                 readOnly
                 className="w-full bg-transparent border-none outline-none text-gray-900 text-sm"
