@@ -70,9 +70,34 @@ function PromotionVideosPage() {
   const [isMuted, setIsMuted] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Track if current video has been watched for required duration (for Take Quiz button)
+  const [videoWatchCompleted, setVideoWatchCompleted] = useState(false);
+
+  // localStorage key for tracking completed videos
+  const getCompletedVideosKey = () => {
+    const userId = userInfo?.data?.id || 'guest';
+    return `promotion_completed_videos_${userId}`;
+  };
+
+  // Check if a video is marked as completed
+  const isVideoCompleted = (videoId: string) => {
+    const key = getCompletedVideosKey();
+    const completedVideos = JSON.parse(localStorage.getItem(key) || '{}');
+    return completedVideos[videoId] === true;
+  };
+
+  // Mark a video as completed
+  const markVideoCompleted = (videoId: string) => {
+    const key = getCompletedVideosKey();
+    const completedVideos = JSON.parse(localStorage.getItem(key) || '{}');
+    completedVideos[videoId] = true;
+    localStorage.setItem(key, JSON.stringify(completedVideos));
+    setVideoWatchCompleted(true);
+  };
+
   // YouTube video watch time tracking
-  // Duration will be fetched from YouTube using ReactPlayer
-  const [youtubeVideoDuration, setYoutubeVideoDuration] = useState<number>(5 * 60 * 1000); // Default 5 min
+  // Duration will be fetched from YouTube using ReactPlayer or oEmbed API
+  const [youtubeVideoDuration, setYoutubeVideoDuration] = useState<number>(0); // 0 means not fetched yet
   const [isFetchingDuration, setIsFetchingDuration] = useState(false);
   const hiddenPlayerRef = useRef<any>(null);
 
@@ -80,10 +105,48 @@ function PromotionVideosPage() {
     return youtubeVideoDuration;
   };
 
+  // Fetch YouTube video duration using oEmbed/noembed API as fallback
+  const fetchYouTubeDuration = async (youtubeVideoId: string): Promise<number | null> => {
+    try {
+      // Using noembed.com as a fallback to get video info (works without API key)
+      const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${youtubeVideoId}`);
+      const data = await response.json();
+
+      if (data?.html) {
+        // Extract duration from the embed HTML using a more reliable method
+        // YouTube oEmbed doesn't always include duration, so we'll try another approach
+        const width = data.width;
+        const height = data.height;
+        // This gives us some info but not duration directly
+      }
+    } catch (e) {
+      console.log("Noembed fallback failed:", e);
+    }
+
+    // Try to fetch from YouTube page HTML as another fallback
+    try {
+      const response = await fetch(`https://www.youtube.com/watch?v=${youtubeVideoId}`);
+      const html = await response.text();
+
+      // Look for approximate duration in the page HTML (lengthSeconds)
+      const lengthMatch = html.match(/"lengthSeconds":"(\d+)"/);
+      if (lengthMatch && lengthMatch[1]) {
+        const seconds = parseInt(lengthMatch[1]);
+        console.log("YouTube duration from page HTML:", seconds);
+        return seconds * 1000; // Convert to milliseconds
+      }
+    } catch (e) {
+      console.log("YouTube page fetch failed:", e);
+    }
+
+    return null;
+  };
+
   const youtubeWatchStartTimeRef = useRef<number | null>(null);
   const [youtubeWatchRemaining, setYoutubeWatchRemaining] = useState<number | null>(null);
   const youtubeCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const completionTriggeredRef = useRef(false); // Ensure completion only triggers once
+  const youtubeDurationRef = useRef<number>(0); // Ref to store current duration for interval access
 
   // Check if device is mobile
   useEffect(() => {
@@ -129,13 +192,8 @@ function PromotionVideosPage() {
     });
   };
 
-  useEffect(() => {
-    const quizeTaken = localStorage.getItem("promotion_video_quiz_taken");
-
-    if (quizeTaken) {
-      handleTakeQuiz();
-    }
-  }, []);
+  // Note: Removed auto-quiz trigger since we now show a button instead
+  // Users must click "Take Quiz Now" button to start the quiz
 
   // Check YouTube watch time on component mount and interval
   useEffect(() => {
@@ -145,6 +203,9 @@ function PromotionVideosPage() {
     completionTriggeredRef.current = false;
     setYoutubeWatchRemaining(null);
     youtubeWatchStartTimeRef.current = null;
+    setVideoWatchCompleted(false); // Reset completed state for new video
+    setYoutubeVideoDuration(0); // Reset duration for new video
+    youtubeDurationRef.current = 0; // Reset duration ref
 
     // Clear any existing interval
     if (youtubeCheckIntervalRef.current) {
@@ -154,31 +215,60 @@ function PromotionVideosPage() {
 
     if (!videoId) return;
 
+    // Check if this video was already completed (for persistence)
+    if (isVideoCompleted(videoId)) {
+      setVideoWatchCompleted(true);
+      // Also clear any pending watch start time since it's already completed
+      const storageKey = `youtube_watch_start_${videoId}`;
+      localStorage.removeItem(storageKey);
+      return;
+    }
+
     // Fetch YouTube video duration on mount (check if YouTube URL)
     const urlCheck = data?.data?.promotion_video?.youtube_link || data?.data?.promotion_video?.video_path;
     const isYoutubeVideo = urlCheck && (urlCheck.includes("youtube.com") || urlCheck.includes("youtu.be"));
 
+    let youtubeVideoId: string | null = null;
     if (isYoutubeVideo && urlCheck) {
       const videoIdMatch = urlCheck.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
       if (videoIdMatch) {
-        const youtubeVideoId = videoIdMatch[1];
+        youtubeVideoId = videoIdMatch[1];
         const cachedDuration = localStorage.getItem(`youtube_duration_${youtubeVideoId}`);
 
         if (cachedDuration) {
           // Use cached duration
-          setYoutubeVideoDuration(parseInt(cachedDuration));
+          const duration = parseInt(cachedDuration);
+          setYoutubeVideoDuration(duration);
+          youtubeDurationRef.current = duration; // Update ref
+          console.log("Using cached YouTube duration:", duration);
         } else {
-          // Duration not cached - will be fetched by hidden player
+          // Duration not cached - fetch using fallback API
           console.log("Fetching YouTube video duration for:", youtubeVideoId);
+          setIsFetchingDuration(true);
+          fetchYouTubeDuration(youtubeVideoId).then((durationMs) => {
+            if (durationMs) {
+              setYoutubeVideoDuration(durationMs);
+              youtubeDurationRef.current = durationMs; // Update ref
+              localStorage.setItem(`youtube_duration_${youtubeVideoId}`, durationMs.toString());
+            }
+            setIsFetchingDuration(false);
+          });
         }
       }
     }
 
     const storageKey = `youtube_watch_start_${videoId}`;
-    const videoDuration = getVideoDuration();
 
     // Check if there's a stored start time for THIS video only
     const checkWatchTime = () => {
+      // Read from ref to get the latest duration value
+      const videoDuration = youtubeDurationRef.current;
+
+      // If we don't have a duration yet and it's a YouTube video, don't proceed
+      if (isYoutubeVideo && videoDuration === 0) {
+        return;
+      }
+
       const storedStartTime = localStorage.getItem(storageKey);
       if (storedStartTime) {
         const startTime = parseInt(storedStartTime);
@@ -223,6 +313,47 @@ function PromotionVideosPage() {
       }
     };
   }, [data?.data?.promotion_video?.id]);
+
+  // Sync youtubeDurationRef when youtubeVideoDuration state changes
+  useEffect(() => {
+    youtubeDurationRef.current = youtubeVideoDuration;
+  }, [youtubeVideoDuration]);
+
+  // Re-check watch time when YouTube duration is fetched
+  useEffect(() => {
+    if (youtubeVideoDuration > 0) {
+      const videoId = data?.data?.promotion_video?.id;
+      const storageKey = `youtube_watch_start_${videoId}`;
+
+      const checkWatchTime = () => {
+        const storedStartTime = localStorage.getItem(storageKey);
+        if (storedStartTime) {
+          const startTime = parseInt(storedStartTime);
+          const elapsed = Date.now() - startTime;
+          const remaining = youtubeVideoDuration - elapsed;
+
+          if (remaining <= 0) {
+            // Video duration completed - clear storage and trigger completion
+            localStorage.removeItem(storageKey);
+            youtubeWatchStartTimeRef.current = null;
+            setYoutubeWatchRemaining(null);
+
+            // Only trigger completion once
+            if (!completionTriggeredRef.current) {
+              completionTriggeredRef.current = true;
+              handlevideoWatchCompleted();
+            }
+          } else {
+            // Update remaining time
+            setYoutubeWatchRemaining(remaining);
+            youtubeWatchStartTimeRef.current = startTime;
+          }
+        }
+      };
+
+      checkWatchTime();
+    }
+  }, [youtubeVideoDuration]);
 
   // Handle fullscreen change
   useEffect(() => {
@@ -459,8 +590,9 @@ function PromotionVideosPage() {
         }
 
         // Show info message with video duration
-        const durationSeconds = Math.round(getVideoDuration() / 1000);
-        const timeDisplay = formatTime(durationSeconds);
+        const durationMs = getVideoDuration();
+        const durationSeconds = Math.round(durationMs / 1000);
+        const timeDisplay = durationMs > 0 ? formatTime(durationSeconds) : 'the full video';
 
         Swal.fire({
           icon: "info",
@@ -470,7 +602,7 @@ function PromotionVideosPage() {
               Video will open in YouTube app.
             </p>
             <p style="font-size: 13px; color: #888; margin-top: 10px;">
-              After watching complete video (${timeDisplay}), come back to take the quiz.
+              After watching ${timeDisplay}, come back to take the quiz.
             </p>
           `,
           confirmButtonText: "OK",
@@ -523,6 +655,7 @@ function PromotionVideosPage() {
     console.log("YouTube duration fetched:", duration);
     const durationMs = Math.round(duration * 1000);
     setYoutubeVideoDuration(durationMs);
+    youtubeDurationRef.current = durationMs; // Update ref for interval access
 
     // Cache in localStorage by video ID so we don't need to fetch again
     const videoIdMatch = videoUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
@@ -602,17 +735,20 @@ function PromotionVideosPage() {
   }
 
   const handlevideoWatchCompleted = async () => {
+    const videoId = data?.data?.promotion_video?.id;
+    if (videoId) {
+      markVideoCompleted(videoId);
+    }
+
     Swal.fire({
       icon: "success",
       title: `${data?.data?.promotion_video?.title}`,
-      text: "You've finished watching the promotion video. Please proceed to take the quiz to continue.",
+      text: "You've finished watching the promotion video. Take the quiz button is now available below!",
       confirmButtonText: "OK",
       customClass: {
         confirmButton:
           "bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-all duration-200",
       },
-    }).then((result) => {
-      handleTakeQuiz();
     });
     setDuration(0);
     setCurrentTime(0);
@@ -656,6 +792,25 @@ function PromotionVideosPage() {
       user_promoter_session_id: data?.data?.user_promoter_session?.id,
     });
     if (response) {
+      const videoId = data?.data?.promotion_video?.id;
+
+      if (videoId) {
+        // Clear the completed status for this video since quiz is done
+        const key = getCompletedVideosKey();
+        const completedVideos = JSON.parse(localStorage.getItem(key) || '{}');
+        delete completedVideos[videoId];
+        localStorage.setItem(key, JSON.stringify(completedVideos));
+
+        // Clear the watch start time for this video so it starts fresh next time
+        const watchStartKey = `youtube_watch_start_${videoId}`;
+        localStorage.removeItem(watchStartKey);
+      }
+
+      // Reset all video-related state
+      setYoutubeWatchRemaining(null);
+      youtubeWatchStartTimeRef.current = null;
+      completionTriggeredRef.current = false;
+
       Swal.fire(
         "Completed!",
         "Thank you for taking the quiz! Your participation is appreciated.",
@@ -663,6 +818,7 @@ function PromotionVideosPage() {
       );
       setQuery();
       setTakeQuiz(false);
+      setVideoWatchCompleted(false);
     }
   };
 
@@ -735,12 +891,24 @@ function PromotionVideosPage() {
                       <p className="text-sm opacity-90">Come back after watching</p>
                     </div>
                   </div>
-                  {/* <div className="text-center">
+                  <div className="text-center">
                     <div className="text-3xl font-bold">
                       {formatRemainingTime(youtubeWatchRemaining)}
                     </div>
                     <div className="text-xs opacity-75">remaining</div>
-                  </div> */}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading duration message */}
+          {isYoutube && youtubeVideoDuration === 0 && isFetchingDuration && (
+            <div className="px-6 mt-6">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-4 text-white">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  <span className="text-sm">Fetching video duration...</span>
                 </div>
               </div>
             </div>
@@ -815,9 +983,13 @@ function PromotionVideosPage() {
                   }}
                   onEnded={() => {
                     console.log("Promotion video onEnded fired");
+                    const videoId = data?.data?.promotion_video?.id;
                     if (duration > 0 && currentTime > duration * 0.9) {
+                      // Mark as completed and show button
+                      markVideoCompleted(videoId);
                       handlevideoWatchCompleted();
                     } else if (duration === 0 && currentTime > 0) {
+                      markVideoCompleted(videoId);
                       handlevideoWatchCompleted();
                     } else {
                       console.log("Promotion video ended prematurely, not marking as watched");
@@ -953,6 +1125,22 @@ function PromotionVideosPage() {
             </div>
           </div>
 
+          {/* Take Quiz Button - Show after video is completed */}
+          {!isFullscreen && videoWatchCompleted && (
+            <div className="px-6 mt-6">
+              <button
+                onClick={handleTakeQuiz}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transform transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-3"
+              >
+                <Trophy className="w-6 h-6" />
+                <span className="text-lg">Take Quiz Now</span>
+              </button>
+              <p className="text-center text-sm text-gray-600 mt-3">
+                You've completed the video! Tap the button above to take the quiz.
+              </p>
+            </div>
+          )}
+
           {/* Video Details - Hide when in fullscreen */}
           {!isFullscreen && (
             <div className="px-6 mt-6">
@@ -1008,7 +1196,7 @@ function PromotionVideosPage() {
 
           {/* Hidden YouTube player to fetch video duration */}
           {isYoutube && videoUrl && (
-            <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none', left: '-9999px' }}>
               <ReactPlayerAny
                 ref={hiddenPlayerRef}
                 url={videoUrl}
@@ -1017,6 +1205,20 @@ function PromotionVideosPage() {
                 playing={false}
                 controls={false}
                 onDuration={handleHiddenPlayerDuration}
+                onError={(e: any) => {
+                  console.log("Hidden player error, using fallback fetch:", e);
+                  // If hidden player fails, use the API fallback
+                  const videoIdMatch = videoUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
+                  if (videoIdMatch) {
+                    fetchYouTubeDuration(videoIdMatch[1]).then((durationMs) => {
+                      if (durationMs) {
+                        setYoutubeVideoDuration(durationMs);
+                        youtubeDurationRef.current = durationMs; // Update ref
+                        localStorage.setItem(`youtube_duration_${videoIdMatch[1]}`, durationMs.toString());
+                      }
+                    });
+                  }
+                }}
                 config={{
                   youtube: {
                     playerVars: {
@@ -1025,6 +1227,9 @@ function PromotionVideosPage() {
                       disablekb: 1,
                       fs: 0,
                       playsinline: 1,
+                      iv_load_policy: 3,
+                      modestbranding: 1,
+                      rel: 0,
                     },
                     embedOptions: {
                       host: 'https://www.youtube.com'
