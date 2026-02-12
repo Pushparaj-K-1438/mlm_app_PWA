@@ -31,7 +31,7 @@ const PinForm = ({
     validateOnBlur: true,
     validationSchema: VALIDATION_SCHEMA,
   });
-  const currentLevel = data?.current_level;
+  const currentLevel = data?.current_level ?? "";
 
   const getLevelName = (level: string | number) => {
     const levelMap: { [key: string]: string } = {
