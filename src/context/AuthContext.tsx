@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import axiosInstance from "@/utils/CustomAxios";
 import { API_AUTH_USER } from "@/utils/http/apiPaths";
@@ -20,7 +21,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   role?: number | null;
-  logout: () => void;
+  logout: (redirect?: boolean) => void;
   login: (token: string | undefined | null) => void;
 }
 
@@ -39,6 +40,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { navigate } = useQueryParams();
+  const location = useLocation();
   const [role, setRole] = useState<number | null>(null);
 
   const [user, setUser] = useState<User | null>(() => {
@@ -46,14 +48,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
+    setIsLoading(true);
     let token: string | null | undefined = Lib.getCookies("session-token");
     let decordToken: JwtPayload = token ? Lib.DecodeJwt(token) : null;
-    if (token && decordToken?.role !== undefined) {
+    const now = Math.floor(Date.now() / 1000);
+    if (token && decordToken?.role !== undefined && decordToken?.exp > now) {
       setUpUserData(decordToken);
     } else {
-      logout();
+      logout(true);
     }
-  }, []);
+  }, [location.pathname]);
 
   const setUpUserData = (decordToken: any) => {
     setRole(decordToken?.role);
