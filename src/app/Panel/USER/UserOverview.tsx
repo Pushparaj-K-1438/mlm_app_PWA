@@ -13,6 +13,7 @@ import {
   Gift
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import Lib from '@/utils/Lib';
 
 export default function UserOverview() {
   const { user } = useAuth();
@@ -98,10 +99,10 @@ export default function UserOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">₹{totalEarnings}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{Lib.formatAmount(totalEarnings)}</p>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                +12% from last month
+                
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -114,7 +115,7 @@ export default function UserOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Cash Wallet</p>
-              <p className="text-2xl font-bold text-gray-900">₹{user?.earnings.cash}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{Lib.formatAmount(user?.earnings.cash)}</p>
               <p className="text-xs text-blue-600 flex items-center mt-1">
                 <DollarSign className="w-3 h-3 mr-1" />
                 Available for withdrawal
@@ -130,7 +131,7 @@ export default function UserOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Grow Wallet</p>
-              <p className="text-2xl font-bold text-gray-900">₹{user?.earnings.grow}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{Lib.formatAmount(user?.earnings.grow)}</p>
               <p className="text-xs text-purple-600 flex items-center mt-1">
                 <TrendingUp className="w-3 h-3 mr-1" />
                 Investment earnings
@@ -146,7 +147,7 @@ export default function UserOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Scratch Cards</p>
-              <p className="text-2xl font-bold text-gray-900">₹{user?.earnings.scratch}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{Lib.formatAmount(user?.earnings.scratch)}</p>
               <p className="text-xs text-orange-600 flex items-center mt-1">
                 <Gift className="w-3 h-3 mr-1" />
                 Bonus rewards
