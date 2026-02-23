@@ -22,6 +22,7 @@ import {
 import logo from '@/assets/logo.png';
 import { useGetCall } from '@/hooks';
 import { SERVICE } from "@/constants/services";
+import Lib from '@/utils/Lib';
 
 export default function UserDashboard() {
   const { user } = useAuth();
@@ -125,7 +126,7 @@ export default function UserDashboard() {
                 <IndianRupee className="w-4 h-4 text-blue-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">₹{userDataLoading ? '...' : (userData?.data?.cash_wallet || 0)}</p>
+            <p className="text-2xl font-bold text-gray-900">₹{userDataLoading ? '...' : Lib.formatAmount(userData?.data?.cash_wallet || 0)}</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
@@ -135,7 +136,7 @@ export default function UserDashboard() {
                 <TrendingUp className="w-4 h-4 text-purple-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">₹{userDataLoading ? '...' : (userData?.data?.grow_wallet || 0)}</p>
+            <p className="text-2xl font-bold text-gray-900">₹{userDataLoading ? '...' : Lib.formatAmount(userData?.data?.grow_wallet || 0)}</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
@@ -145,7 +146,7 @@ export default function UserDashboard() {
                 <Gift className="w-4 h-4 text-orange-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">₹{userDataLoading ? '...' : (userData?.data?.scratch_wallet || 0)}</p>
+            <p className="text-2xl font-bold text-gray-900">₹{userDataLoading ? '...' : Lib.formatAmount(userData?.data?.scratch_wallet || 0)}</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">

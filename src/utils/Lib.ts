@@ -223,13 +223,19 @@ const Lib = {
     },
     
     /**
-     * Formats a number to 2 decimal places
+     * Formats a number to 2 decimal places in Indian format
      * @param {number|string} amount - The amount to format
-     * @returns {string} Formatted amount with 2 decimal places
+     * @returns {string} Formatted amount with 2 decimal places in Indian locale
      */
     formatAmount(amount: number | string): string {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-        return isNaN(num) ? '0.00' : num.toFixed(2);
+        if (isNaN(num)) return '0.00';
+        
+        // Use Indian locale formatting with minimum 2 decimal places
+        return new Intl.NumberFormat('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
     }
 
 }
