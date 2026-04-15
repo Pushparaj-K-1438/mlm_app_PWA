@@ -179,14 +179,14 @@ const ContactUs = () => {
             <MapPin className="w-5 h-5 text-gray-600 mr-3 mt-0.5" />
             <div>
               <p className="text-gray-900 font-medium">
-                First Floor Office
-              </p>
-              {/* <p className="text-gray-600">
-                New York, NY 10001
+                10/c Mc Road,
               </p>
               <p className="text-gray-600">
-                United States
-              </p> */}
+                Sankuppam, Near by Priya Mahal,Ambur,
+              </p>
+              <p className="text-gray-600">
+                Tirupattur District. Pin code - 635814
+              </p>
             </div>
           </div>
         </div>
