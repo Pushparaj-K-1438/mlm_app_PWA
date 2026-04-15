@@ -155,7 +155,7 @@ const ContactUs = () => {
           <ContactItem
             icon={Mail}
             title="Email Address"
-            value="support@example.com"
+            value="starupworldoffice@gamil.com"
             label="Send us an email"
             copyable={true}
           />
@@ -179,24 +179,24 @@ const ContactUs = () => {
             <MapPin className="w-5 h-5 text-gray-600 mr-3 mt-0.5" />
             <div>
               <p className="text-gray-900 font-medium">
-                123 Main Street, Suite 100
+                First Floor Office
               </p>
-              <p className="text-gray-600">
+              {/* <p className="text-gray-600">
                 New York, NY 10001
               </p>
               <p className="text-gray-600">
                 United States
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
 
-        <div className="mt-4 flex justify-center">
+        {/* <div className="mt-4 flex justify-center">
           <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
             <MapPin className="w-4 h-4 mr-2" />
             Get Directions
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
