@@ -86,7 +86,7 @@ const TrainingVideoWarning = ({ children }) => {
         {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            This is a required 7-day training program to get started
+            This is a required 3-day training program to get started
           </p>
         </div>
       </div>

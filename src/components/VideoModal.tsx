@@ -196,7 +196,7 @@ export default function VideoModal({
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    {[1, 2, 3].map((day) => (
                       <option key={day} value={day}>
                         Day {day}
                       </option>

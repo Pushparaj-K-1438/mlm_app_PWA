@@ -91,7 +91,7 @@ export default function WelcomePage() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Video Training</h3>
                 <p className="text-gray-600">
-                  Access daily videos and comprehensive 7-day training programs
+                  Access daily videos and comprehensive 3-day training programs
                 </p>
               </div>
             </div>

@@ -217,10 +217,10 @@ export default function TrainingVideos() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              7-Day Training Videos
+              3-Day Training Videos
             </h1>
             <p className="mt-2 text-gray-600">
-              Manage the comprehensive 7-day training program
+              Manage the comprehensive 3-day training program
             </p>
           </div>
           <button
@@ -240,24 +240,20 @@ export default function TrainingVideos() {
       {/* Training Program Overview */}
       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 mb-6 border border-green-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          7-Day Training Program Structure
+          3-Day Training Program Structure
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-sm font-medium text-green-600">Days 1</div>
+            <div className="text-sm font-medium text-green-600">Day 1</div>
             <div className="text-gray-900">Welcome Video</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-sm font-medium text-blue-600">Days 2-3</div>
-            <div className="text-gray-900">Company Plan Video</div>
+            <div className="text-sm font-medium text-blue-600">Day 2</div>
+            <div className="text-gray-900">Company Plan</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-sm font-medium text-purple-600">Days 4-5</div>
-            <div className="text-gray-900">How Work Video</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-sm font-medium text-orange-600">Days 6-7</div>
-            <div className="text-gray-900">Demo Working </div>
+            <div className="text-sm font-medium text-orange-600">Day 3</div>
+            <div className="text-gray-900">How to Work</div>
           </div>
         </div>
       </div>

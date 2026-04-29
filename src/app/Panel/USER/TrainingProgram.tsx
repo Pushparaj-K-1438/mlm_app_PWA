@@ -14,7 +14,6 @@ import {
   VolumeX,
   Calendar,
   BookOpen,
-  Award,
   Target,
 } from "lucide-react";
 import { useActionCall, useGetCall } from "@/hooks";
@@ -362,7 +361,7 @@ const TrainingProgramWatch = () => {
                 Congratulations!
               </h3>
               <p className="text-gray-600">
-                You have completed all the training videos for the 7-day
+                You have completed all the training videos for the 3-day
                 training program. Great job!
               </p>
             </div>
@@ -500,16 +499,16 @@ const TrainingProgramWatch = () => {
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
             <h1 className="text-xl font-bold text-gray-900">
-              7-Day Training Program
+              3-Day Training Program
             </h1>
             <div className="flex items-center justify-between mt-2">
               <p className="text-sm text-gray-600">
-                Day {data?.data?.training?.day} of 7
+                Day {data?.data?.training?.day} of 3
               </p>
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 mr-2">Progress</span>
                 <div className="text-lg font-bold text-blue-600">
-                  {data?.data?.training?.day}/7
+                  {data?.data?.training?.day}/3
                 </div>
               </div>
             </div>
@@ -517,7 +516,7 @@ const TrainingProgramWatch = () => {
               <div
                 className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
                 style={{
-                  width: `${(data?.data?.training?.day / 7) * 100}%`,
+                  width: `${(data?.data?.training?.day / 3) * 100}%`,
                 }}
               ></div>
             </div>
@@ -536,7 +535,7 @@ const TrainingProgramWatch = () => {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-blue-600">
-                      Days 1
+                      Day 1
                     </div>
                     <div className="text-gray-900 font-medium">
                       Welcome Video
@@ -550,24 +549,10 @@ const TrainingProgramWatch = () => {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-green-600">
-                      Days 2-3
+                      Day 2
                     </div>
                     <div className="text-gray-900 font-medium">
-                      Company Plan Video
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center p-3 bg-purple-50 rounded-xl">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                    <Award className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-purple-600">
-                      Days 4-5
-                    </div>
-                    <div className="text-gray-900 font-medium">
-                      How Work Video
+                      Company Plan
                     </div>
                   </div>
                 </div>
@@ -578,10 +563,10 @@ const TrainingProgramWatch = () => {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-orange-600">
-                      Days 6-7
+                      Day 3
                     </div>
                     <div className="text-gray-900 font-medium">
-                      Demo Working
+                      How to Work
                     </div>
                   </div>
                 </div>

@@ -80,12 +80,12 @@ export default function UserOverview() {
                 <span className="text-2xl font-bold">{user?.level}</span>
               </div>
               <div className="text-sm opacity-75">
-                Training Day {user?.trainingDay}/7
+                Training Day {user?.trainingDay}/3
               </div>
               <div className="w-32 bg-white/20 rounded-full h-2 mt-2">
-                <div 
-                  className="bg-white h-2 rounded-full transition-all duration-500" 
-                  style={{ width: `${(user?.trainingDay / 7) * 100}%` }}
+                <div
+                  className="bg-white h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(user?.trainingDay / 3) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function UserOverview() {
                   <span className="text-sm font-medium text-gray-900">Training Day {user?.trainingDay}</span>
                 </div>
                 <span className="text-xs text-blue-600 font-medium">
-                  {user?.trainingDay === 7 ? 'Completed' : 'In Progress'}
+                  {user?.trainingDay === 3 ? 'Completed' : 'In Progress'}
                 </span>
               </div>
               

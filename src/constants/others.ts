@@ -336,10 +336,6 @@ export const OPTIONS = {
         { label: 'Day 1', value: '1' },
         { label: 'Day 2', value: '2' },
         { label: 'Day 3', value: '3' },
-        { label: 'Day 4', value: '4' },
-        { label: 'Day 5', value: '5' },
-        { label: 'Day 6', value: '6' },
-        { label: 'Day 7', value: '7' },
     ],
     SESSION_TYPE: [
         { value: "1", label: "Morning Session" },
