@@ -864,7 +864,7 @@ function PromotionVideosPage() {
                     <Video className="w-6 h-6 mb-2" />
                     <span className="text-xs opacity-90">Videos</span>
                     <span className="text-lg font-bold">
-                      {userInfo?.data?.current_promoter_level >= 2 ? "4" : "2"}
+                      {userInfo?.data?.current_promoter_level >= 3 ? "4" : "2"}
                     </span>
                   </div>
                 </div>

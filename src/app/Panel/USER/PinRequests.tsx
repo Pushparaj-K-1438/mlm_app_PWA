@@ -151,11 +151,18 @@ function PinRequestsPage() {
               </div>
               <div className="ml-4">
                 <div className="text-sm text-gray-600">Current Level</div>
-                <div className={`text-2xl font-bold ${getLevelColor(
-                  pinRequests?.data[0]?.user?.current_promoter_level
-                )}`}>
-                  {getLevelName(
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className={`text-2xl font-bold ${getLevelColor(
                     pinRequests?.data[0]?.user?.current_promoter_level
+                  )}`}>
+                    {getLevelName(
+                      pinRequests?.data[0]?.user?.current_promoter_level
+                    )}
+                  </div>
+                  {Number(pinRequests?.data?.[0]?.user?.is_distributor) === 1 && (
+                    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm">
+                      <Crown className="w-3 h-3 mr-0.5" /> Distributor
+                    </span>
                   )}
                 </div>
               </div>

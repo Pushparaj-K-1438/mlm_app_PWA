@@ -304,11 +304,24 @@ function ReferralPage() {
                     </span>
                     <span className="text-xs bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">You</span>
                   </div>
+                  {profileData?.data?.customer_id && (
+                    <div className="text-xs opacity-90">
+                      Customer ID:{" "}
+                      <span className="font-mono font-semibold">
+                        {profileData.data.customer_id}
+                      </span>
+                    </div>
+                  )}
                   <div className="text-sm opacity-90">
                     {profileData?.data?.mobile} • Network Leader
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end gap-1">
+                  {Number(userDashboardData?.data?.is_distributor) === 1 && (
+                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-300/90 text-amber-900 whitespace-nowrap">
+                      <Crown className="w-2.5 h-2.5 mr-0.5" /> Distributor
+                    </span>
+                  )}
                   <span className="px-2 py-1 text-xs font-medium bg-white/20 backdrop-blur-sm rounded-full whitespace-nowrap">
                     {getLevelName(userDashboardData?.data?.current_promoter_level)}
                   </span>
@@ -340,13 +353,26 @@ function ReferralPage() {
                               {referalUser?.is_active ? "active" : "inactive"}
                             </span>
                           </div>
+                          {referalUser?.customer_id && (
+                            <div className="text-xs text-emerald-700">
+                              Customer ID:{" "}
+                              <span className="font-mono font-semibold">
+                                {referalUser.customer_id}
+                              </span>
+                            </div>
+                          )}
                           <div className="text-sm text-gray-600">
                             {referalUser.mobile} • Joined{" "}
                             {referalUser.created_at_formatted}
                           </div>
                         </div>
 
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-1">
+                          {Number(referalUser?.is_distributor) === 1 && (
+                            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200 whitespace-nowrap">
+                              <Crown className="w-2.5 h-2.5 mr-0.5" /> Distributor
+                            </span>
+                          )}
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getLevelColor(
                               referalUser?.current_promoter_level

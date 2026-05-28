@@ -209,6 +209,14 @@ const Profile = () => {
                 {profileData?.data?.first_name} {profileData?.data?.last_name}
               </h2>
               <p className="text-gray-500 mt-1">{profileData?.data?.email}</p>
+              {profileData?.data?.customer_id && (
+                <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-sm">
+                  <span className="text-emerald-700">Customer ID:</span>
+                  <span className="ml-1.5 font-mono font-semibold text-emerald-900">
+                    {profileData.data.customer_id}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

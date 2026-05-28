@@ -47,6 +47,10 @@ export default function UserDashboard() {
   };
 
   const currentRole = getCurrentRole(userData?.data?.current_promoter_level);
+  // Distributor is an additive flag worn on top of the existing promoter
+  // level — we leave the level text/color/icon alone and surface it as a
+  // small chip next to wherever the level is shown.
+  const isDistributor = Number(userData?.data?.is_distributor) === 1;
 
   const getLevelColor = (role) => {
     const colors = {
@@ -79,11 +83,19 @@ export default function UserDashboard() {
             <h1 className="text-3xl font-bold mb-2">
               {greeting}, {user?.username}! 👋
             </h1>
+            {userData?.data?.customer_id && (
+              <p className="text-sm opacity-90 mb-1">
+                Customer ID:{" "}
+                <span className="font-mono font-semibold">
+                  {userData.data.customer_id}
+                </span>
+              </p>
+            )}
             <p className="text-lg opacity-90">
-              {currentTime.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'short', 
-                day: 'numeric' 
+              {currentTime.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric'
               })}
             </p>
           </div>
@@ -104,6 +116,11 @@ export default function UserDashboard() {
           </div>
           <div className="text-right">
             <p className="text-sm opacity-75">Current Level</p>
+            {isDistributor && (
+              <span className="inline-flex items-center px-2 py-0.5 mb-1 text-[10px] font-semibold rounded-full bg-amber-300/90 text-amber-900">
+                <Crown className="w-2.5 h-2.5 mr-0.5" /> Distributor
+              </span>
+            )}
             <p className="text-xl font-bold">
               {currentRole === 'trainee' ? 'Trainee' :
                currentRole === 'promotor' ? 'Promoter' :
@@ -174,14 +191,21 @@ export default function UserDashboard() {
                 {getLevelIcon(currentRole)}
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {currentRole === 'trainee' ? 'Trainee' :
-                   currentRole === 'promotor' ? 'Promoter' :
-                   currentRole === 'promotor1' ? 'Promoter Level 1' :
-                   currentRole === 'promotor2' ? 'Promoter Level 2' :
-                   currentRole === 'promotor3' ? 'Promoter Level 3' :
-                   currentRole === 'promotor4' ? 'Promoter Level 4' : 'Unknown Level'}
-                </h3>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {currentRole === 'trainee' ? 'Trainee' :
+                     currentRole === 'promotor' ? 'Promoter' :
+                     currentRole === 'promotor1' ? 'Promoter Level 1' :
+                     currentRole === 'promotor2' ? 'Promoter Level 2' :
+                     currentRole === 'promotor3' ? 'Promoter Level 3' :
+                     currentRole === 'promotor4' ? 'Promoter Level 4' : 'Unknown Level'}
+                  </h3>
+                  {isDistributor && (
+                    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm">
+                      <Crown className="w-3 h-3 mr-0.5" /> Distributor
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-500">
                   {userData?.data?.current_promoter_level === null ? 'Start your journey as a trainee' :
                   userData?.data?.current_promoter_level === 0 ? 'Basic promoter level' :

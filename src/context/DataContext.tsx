@@ -164,7 +164,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               isCorrect: false,
             },
           ],
-          timeLimit: 30,
+          timeLimit: 55,
         },
         {
           id: "2",
@@ -185,7 +185,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               isCorrect: false,
             },
           ],
-          timeLimit: 30,
+          timeLimit: 55,
         },
       ],
       earnings: {

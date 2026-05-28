@@ -56,7 +56,18 @@ export const SERVICE: any = {
     TRAINING_STATUS_UPDATE: 'user-day-training-mark-as-completed',
     EARNINGS_HISTORY: 'earning-histories',
     WITHDRAW_HISTRY: 'withdraw-histories',
-    WITHDRAW_REQUEST: 'withdraws'
+    WITHDRAW_REQUEST: 'withdraws',
+
+    // Support & Help — read-only list for the user accordion. Returns only
+    // active items in admin-insertion order (id ASC).
+    SUPPORT_HELPS_LIST: 'support-helps/list',
+
+    // Terms & Conditions — read-only single document. Public endpoint
+    // (admin upserts the same row via the admin web).
+    TERMS_AND_CONDITIONS: 'terms-and-conditions',
+
+    // User suggestions — CRUD on the user's own rows. Hard cap of 3 unread.
+    SUGGESTIONS: 'suggestions'
 
 
 }

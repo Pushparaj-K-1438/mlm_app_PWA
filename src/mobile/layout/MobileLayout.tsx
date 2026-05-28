@@ -1,5 +1,5 @@
-import React, { ReactNode, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import React, { ReactNode, useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
@@ -22,6 +22,9 @@ import {
   UserCircle,
   ShoppingCart,
   Shield,
+  HelpCircle,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -40,6 +43,31 @@ import BirthdayModal from "@/components/BirthdayModal";
 interface MobileLayoutProps {
   children?: ReactNode;
 }
+
+// Top-level user menu paths. Pressing browser-back from any of these (when
+// no modal is open) should jump straight to the dashboard rather than
+// drilling back through previously-visited menus. Dashboard itself is
+// deliberately NOT in this list — back from dashboard keeps default
+// browser behavior.
+const USER_DASHBOARD_PATH = "/portal/user/dashboard";
+const TOP_LEVEL_USER_MENUS = [
+  "/portal/user/daily-video-watch",
+  "/portal/user/training-program",
+  "/portal/user/promotion-videos",
+  "/portal/user/pin-requests",
+  "/portal/user/referrals",
+  "/portal/user/earnings-history",
+  "/portal/user/withdraw-requests",
+  "/portal/user/youtube-channels",
+  "/portal/user/profile-settings",
+  "/portal/user/scratch-card",
+  "/portal/user/contact-us",
+  "/portal/user/support-help",
+  "/portal/user/suggestions",
+  "/portal/user/terms-and-conditions",
+  "/portal/user/repurchase",
+  "/portal/user/sbi-life",
+];
 
 // User menu items (matching sidebar)
 const getUserMenuItems = (role: number) => {
@@ -210,6 +238,27 @@ const getUserMenuItems = (role: number) => {
         color: "from-green-500 to-emerald-600",
       },
       {
+        id: "support-help",
+        label: "Support & Help",
+        path: "/portal/user/support-help",
+        icon: HelpCircle,
+        color: "from-blue-500 to-indigo-600",
+      },
+      {
+        id: "suggestions",
+        label: "Suggestions",
+        path: "/portal/user/suggestions",
+        icon: MessageSquare,
+        color: "from-cyan-500 to-blue-600",
+      },
+      {
+        id: "terms-and-conditions",
+        label: "Terms & Conditions",
+        path: "/portal/user/terms-and-conditions",
+        icon: FileText,
+        color: "from-slate-500 to-gray-600",
+      },
+      {
         id: "profile-settings",
         label: "Profile Settings",
         path: "/portal/user/profile-settings",
@@ -247,10 +296,41 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
   const { role, logout, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isLoggedIn = role !== undefined && role !== null;
   const isAdmin = role === ROLE.ADMIN || role === ROLE.SUPER_ADMIN;
+
+  // Back-to-dashboard guard.
+  // When ROLE.USER is on a top-level menu page AND no modal is open
+  // (modals in this app use a `?Modal=...` query param), the next browser
+  // back press should land on the dashboard rather than the previously
+  // visited menu. Mechanism: push a sentinel history entry so the first
+  // back press fires popstate while we're still on the same URL; handler
+  // intercepts and navigates to dashboard with replace (so forward arrow
+  // doesn't bounce back). Inner pages / open modals are excluded so their
+  // natural back behavior (close modal, go to parent) is preserved.
+  const isModalOpen = !!searchParams.get("Modal");
+  const shouldGuardBack =
+    role === ROLE.USER &&
+    TOP_LEVEL_USER_MENUS.includes(location.pathname) &&
+    !isModalOpen;
+
+  useEffect(() => {
+    if (!shouldGuardBack) return;
+
+    window.history.pushState(null, "", window.location.href);
+
+    const onPopState = () => {
+      navigate(USER_DASHBOARD_PATH, { replace: true });
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [shouldGuardBack, navigate]);
 
   // Don't show bottom navigation on login/register pages
   const hideNavPaths = ["/login", "/register"];

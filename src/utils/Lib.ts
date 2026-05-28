@@ -99,7 +99,7 @@ const Lib = {
         formattedQuestions = questions.filter(quizItem => quizItem.lang_type == lang).map(item => ({
             id: item.id,
             question: item?.question,
-            timeLimit: item?.time_limit ?? 30,
+            timeLimit: item?.time_limit ?? 55,
             promotor: item?.promotor,
             promotor1: item?.promotor1,
             promotor2: item?.promotor2,

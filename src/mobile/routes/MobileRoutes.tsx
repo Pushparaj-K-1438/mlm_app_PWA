@@ -46,6 +46,15 @@ const ScratchCard = Loadable(
 const ContactUs = Loadable(
   lazy(() => import("@/app/Panel/USER/ContactUs"))
 );
+const SupportHelp = Loadable(
+  lazy(() => import("@/app/Panel/USER/SupportHelp"))
+);
+const TermsAndConditions = Loadable(
+  lazy(() => import("@/app/Panel/USER/TermsAndConditions"))
+);
+const Suggestions = Loadable(
+  lazy(() => import("@/app/Panel/USER/Suggestions"))
+);
 const Repurchase = Loadable(
   lazy(() => import("@/app/Panel/USER/Repurchase"))
 );
@@ -193,6 +202,18 @@ export default function MobileRoutes(): React.ReactElement | null {
       {
         path: "portal/user/contact-us",
         element: <ContactUs />,
+      },
+      {
+        path: "portal/user/support-help",
+        element: <SupportHelp />,
+      },
+      {
+        path: "portal/user/suggestions",
+        element: <Suggestions />,
+      },
+      {
+        path: "portal/user/terms-and-conditions",
+        element: <TermsAndConditions />,
       },
       {
         path: "portal/user/repurchase",

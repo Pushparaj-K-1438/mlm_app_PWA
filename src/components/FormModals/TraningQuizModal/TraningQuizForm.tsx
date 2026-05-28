@@ -47,7 +47,7 @@ const Question = [
   {
     questionEn: "",
     questionTa: "",
-    timeLimit: 30,
+    timeLimit: 55,
     promotor: 1,
     promotor1: 2,
     promotor2: 3,
