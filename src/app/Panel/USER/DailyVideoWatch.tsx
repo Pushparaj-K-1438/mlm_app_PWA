@@ -736,10 +736,14 @@ export default function DailyVideoWatch({
 
             <p className="text-gray-600 mb-4">{data?.data?.description}</p>
 
-            <div className="flex items-center text-sm text-gray-500">
-              <Calendar className="w-4 h-4 mr-1" />
-              {UIHelpers.DateFormat(data?.data?.showing_date)}
-            </div>
+            {(data?.data?.display_date || data?.data?.showing_date) && (
+              <div className="flex items-center text-sm text-gray-500">
+                <Calendar className="w-4 h-4 mr-1" />
+                {UIHelpers.DateFormat(
+                  data?.data?.display_date || data?.data?.showing_date
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
