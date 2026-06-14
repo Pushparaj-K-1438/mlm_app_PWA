@@ -61,6 +61,9 @@ const Repurchase = Loadable(
 const SBILife = Loadable(
   lazy(() => import("@/app/Panel/USER/SBILife"))
 );
+const BoxRequests = Loadable(
+  lazy(() => import("@/app/Panel/USER/BoxRequests"))
+);
 
 // Lazy-loaded Admin components
 const AdminDashboard = Loadable(
@@ -166,6 +169,10 @@ export default function MobileRoutes(): React.ReactElement | null {
       {
         path: "portal/user/pin-requests",
         element: <PinRequests />,
+      },
+      {
+        path: "portal/user/box-requests",
+        element: <BoxRequests />,
       },
       {
         path: "portal/user/referrals",

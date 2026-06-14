@@ -24,6 +24,15 @@ export const VALIDATION_SCHEMA = Yup.object().shape({
   }),
 });
 
+// Box allocation rules mirror the backend (PromoterBoxRequest::LEVEL_RULES):
+// levels 0/1/2 get a fixed default automatically; levels 3/4 pick a quantity.
+const BOX_DEFAULT_BY_LEVEL: Record<number, number> = { 0: 1, 1: 1, 2: 10 };
+const BOX_OPTIONS_BY_LEVEL: Record<number, number[]> = { 3: [10, 20], 4: [10, 20, 30] };
+
+// Plan product naming: the base Promoter (level 0) gets "Energy Plus";
+// every other level gets "Health Plus". No "box" wording is shown to users.
+const productName = (lvl: number) => (Number(lvl) === 0 ? "Energy Plus" : "Health Plus");
+
 const ActivatePinForm = ({
   data = {},
   onAction = (values: any) => {},
@@ -31,6 +40,23 @@ const ActivatePinForm = ({
   loading = false,
   RequestError = {},
 }: any) => {
+  const level = Number(data?.level);
+  const boxChoices = BOX_OPTIONS_BY_LEVEL[level] ?? [];
+  const isManualBox = boxChoices.length > 0;
+  const autoBoxQty = BOX_DEFAULT_BY_LEVEL[level];
+  const boxCap = level === 4 ? 30 : level === 3 ? 20 : undefined;
+
+  // L3/L4 must pick a box quantity at activation; lower levels are auto.
+  const validationSchema = useMemo(
+    () =>
+      isManualBox
+        ? VALIDATION_SCHEMA.shape({
+            box_quantity: Yup.string().required("Please select number of boxes*"),
+          })
+        : VALIDATION_SCHEMA,
+    [isManualBox]
+  );
+
   const { values, handleChange, errors, handleSubmit, setErrors } = useFormik({
     initialValues: {
       id: data?.id ?? "",
@@ -38,6 +64,7 @@ const ActivatePinForm = ({
       gift_delivery_type: data?.gift_delivery_type ?? "",
       gift_delivery_address: data?.gift_delivery_address ?? "",
       wh_number: data?.user?.mobile ?? "",
+      box_quantity: "",
     },
     onSubmit: async (values: any) => {
       onAction(values);
@@ -45,7 +72,7 @@ const ActivatePinForm = ({
 
     validateOnChange: false,
     validateOnBlur: true,
-    validationSchema: VALIDATION_SCHEMA,
+    validationSchema,
   });
   useMemo(() => {
     if (RequestError && Object.keys(RequestError).length) {
@@ -143,6 +170,42 @@ const ActivatePinForm = ({
             Please select a date at least 25 days from today
           </div>
         </div>
+      )}
+
+      {/* Plan product allocation */}
+      {isManualBox ? (
+        <div>
+          <div className="flex items-center mb-2">
+            <Package className="w-5 h-5 text-gray-500 mr-2" />
+            <label className="text-sm font-medium text-gray-700">
+              Number of {productName(level)} *
+            </label>
+          </div>
+          <SelectInput
+            name="box_quantity"
+            placeholder={`Select number of ${productName(level)}`}
+            options={boxChoices.map((n) => ({
+              value: String(n),
+              label: `${n} ${productName(level)}`,
+            }))}
+            onChange={handleChange}
+            error={errors}
+            value={values}
+          />
+          {boxCap ? (
+            <p className="mt-1 text-xs text-gray-500">
+              You can request more later, up to {boxCap} {productName(level)} total
+              for your level.
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        autoBoxQty != null && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center text-sm text-blue-800">
+            <Package className="w-4 h-4 mr-2 flex-shrink-0" />
+            You will receive {autoBoxQty} {productName(level)} with this activation.
+          </div>
+        )
       )}
 
       {/* Important Notes */}

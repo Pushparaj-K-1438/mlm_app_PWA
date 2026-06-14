@@ -67,7 +67,12 @@ export const SERVICE: any = {
     TERMS_AND_CONDITIONS: 'terms-and-conditions',
 
     // User suggestions — CRUD on the user's own rows. Hard cap of 3 unread.
-    SUGGESTIONS: 'suggestions'
+    SUGGESTIONS: 'suggestions',
+
+    // Promoter boxes (product allocation + delivery tracking).
+    BOX_REQUESTS_LIST: 'box-requests/list',
+    BOX_REQUEST: 'box-requests/request',
+    BOX_DELIVERED: 'box-requests/delivered'
 
 
 }
