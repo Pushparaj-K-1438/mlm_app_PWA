@@ -22,6 +22,19 @@ const WithDrawRequestModal = ({ recoilApi = () => {} }) => {
     SERVICE.GET_BANK_INFO
   );
 
+  // A bank record can exist yet be empty (the admin "clear bank details" action
+  // nulls every field), so require the actual fields to be present — not just
+  // that a row exists. Mirrors the server-side guard in WithdrawController.
+  const bank = bankInfo?.data;
+  const hasBankDetails = !!(
+    bank &&
+    bank.acc_no &&
+    bank.acc_name &&
+    bank.ifsc_code &&
+    bank.bank_name &&
+    bank.branch_name
+  );
+
   const closeModal = () => {
     updateSearchParam({ deleteParams: ["Modal", "Edit", "Duplicate"] });
   };
@@ -73,39 +86,7 @@ const WithDrawRequestModal = ({ recoilApi = () => {} }) => {
               </div>
               <p className="text-gray-600">Loading bank information...</p>
             </div>
-          ) : 
-          
-          
-          // bankInfo?.data?.id ? (
-          //   <WithDrawRequestForm
-          //     data={{ ...bankInfo?.data }}
-          //     onAction={onAction}
-          //     RequestError={RequestError}
-          //     onCloseModal={closeModal}
-          //     loading={actionLoading}
-          //   />
-          // ) : (
-          //   <div className="flex flex-col items-center justify-center py-12">
-          //     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-          //       <Banknote className="w-8 h-8 text-red-600" />
-          //     </div>
-          //     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          //       Bank Information Required
-          //     </h3>
-          //     <p className="text-gray-600 text-center mb-6">
-          //       Please add your bank information to enable withdrawal requests.
-          //     </p>
-          //     <Link
-          //       to="/portal/user/profile-settings"
-          //       onClick={closeModal}
-          //       className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors"
-          //     >
-          //       <Plus className="w-4 h-4 mr-2" />
-          //       Add Bank Information
-          //     </Link>
-          //   </div>
-          // )
-          
+          ) : hasBankDetails ? (
             <WithDrawRequestForm
               data={{ ...bankInfo?.data }}
               onAction={onAction}
@@ -113,8 +94,27 @@ const WithDrawRequestModal = ({ recoilApi = () => {} }) => {
               onCloseModal={closeModal}
               loading={actionLoading}
             />
-          
-          }
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <Banknote className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Bank Information Required
+              </h3>
+              <p className="text-gray-600 text-center mb-6">
+                Please add your bank information to enable withdrawal requests.
+              </p>
+              <Link
+                to="/portal/user/profile-settings"
+                onClick={closeModal}
+                className="inline-flex items-center px-6 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Bank Information
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
