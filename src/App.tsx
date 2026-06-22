@@ -10,6 +10,7 @@ import MobileRoutes from "./mobile/routes/MobileRoutes";
 import { AuthProvider } from "./context/AuthContext";
 // import { ThemeProvider } from "./context/ThemeContext";
 import { DataProvider } from "./context/DataContext";
+import ConnectionError from "@/components/ConnectionError";
 const queryClient = new QueryClient();
 
 const App: React.FC = () => {
@@ -39,6 +40,7 @@ const App: React.FC = () => {
               <Toaster />
               <HotToaster />
               <Sonner />
+              <ConnectionError />
             </TooltipProvider>
           </DataProvider>
         </AuthProvider>

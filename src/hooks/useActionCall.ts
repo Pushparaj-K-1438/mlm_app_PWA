@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import toast from 'react-hot-toast';
+import { reportApiError } from "@/utils/connection";
 import { BASE_URL, SERVICE } from "@/constants/services";
 import useQueryParams from "./useQueryParams";
 import Lib from "@/utils/Lib";
@@ -102,7 +103,7 @@ const useActionCall = (url: string): ActionCallResponse => {
                 setLoading(false);
 
 
-                toast.error(error.message)
+                reportApiError(error)
                 setError(error.message);
             }
         },
@@ -171,7 +172,7 @@ const useActionCall = (url: string): ActionCallResponse => {
             } catch (error: any) {
                 setLoading(false);
 
-                toast.error(error.message)
+                reportApiError(error)
                 setError(error.message);
             }
         },
@@ -245,7 +246,7 @@ const useActionCall = (url: string): ActionCallResponse => {
                 setLoading(false);
 
 
-                toast.error(error.message)
+                reportApiError(error)
                 setError(error.message);
             }
         },
@@ -306,7 +307,7 @@ const useActionCall = (url: string): ActionCallResponse => {
             } catch (error: any) {
                 setLoading(false);
 
-                toast.error(error.message)
+                reportApiError(error)
                 setError(error.message);
             }
         },
@@ -358,7 +359,7 @@ const useActionCall = (url: string): ActionCallResponse => {
             setLoading(false);
 
             setError(error.message);
-            toast.error(message);
+            reportApiError(error);
         }
     });
 

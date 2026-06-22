@@ -1,5 +1,6 @@
 import { BASE_URL, SERVICE } from "@/constants/services";
 import toast from 'react-hot-toast';
+import { reportApiError, showConnectionError } from "@/utils/connection";
 import Lib from "@/utils/Lib";
 import { useEffect, useState, useCallback } from "react";
 import useQueryParams from "./useQueryParams";
@@ -92,6 +93,11 @@ const useGetCall = (services: string, initialOptions: OptionsProps = {}) => {
 
                         const error: any = await response.json()
                         throw new Error(error?.message ?? "Record Not Found");
+                    } else if ([502, 503, 504].includes(response.status)) {
+                        // Gateway/server unavailable — treat as unreachable.
+                        showConnectionError();
+                        setLoading(false);
+                        return;
                     } else {
                         throw new Error("Network Error");
                     }
@@ -129,7 +135,7 @@ const useGetCall = (services: string, initialOptions: OptionsProps = {}) => {
                 setLoading(false);
                 return jsonData;
             } catch (error: any) {
-                toast.error(error.message)
+                reportApiError(error)
                 setError(error.message);
                 setLoading(false);
             }
