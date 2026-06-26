@@ -3,11 +3,13 @@ import { HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
+import Lib from "@/utils/Lib";
 
 type FaqItem = {
   id: number;
   question: string;
   answer: string;
+  video?: string | null;
 };
 
 // One accordion row. Local open/closed state — first item starts open so the
@@ -37,10 +39,24 @@ const FaqRow: React.FC<{ item: FaqItem; defaultOpen?: boolean }> = ({
         </span>
       </button>
       {open && (
-        <div className="px-5 pb-5 -mt-1 border-t border-gray-100 pt-3">
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-            {item.answer}
-          </p>
+        <div className="px-5 pb-5 -mt-1 border-t border-gray-100 pt-3 space-y-3">
+          {item.answer && item.answer.trim() !== "" ? (
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+              {item.answer}
+            </p>
+          ) : null}
+          {item.video ? (
+            // Unrestricted player: native controls give full play / pause /
+            // seek (no forward/seek locks like the daily/training videos).
+            <video
+              src={Lib.CloudPath(item.video)}
+              controls
+              playsInline
+              preload="metadata"
+              controlsList="nodownload"
+              className="w-full rounded-xl bg-black"
+            />
+          ) : null}
         </div>
       )}
     </div>
