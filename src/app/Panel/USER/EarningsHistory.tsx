@@ -44,16 +44,16 @@ function EarningsHistoryPage() {
 
         switch (row.earning_type) {
           case 1:
-            message = "Session 1 - Set 1 Video Earning";
+            message = "Session 1 - Set 1 Promotion Earning";
             break;
           case 2:
-            message = "Session 1 - Set 2 Video Earning";
+            message = "Session 1 - Set 2 Promotion Earning";
             break;
           case 3:
-            message = "Session 2 - Set 1 Video Earning";
+            message = "Session 2 - Set 1 Promotion Earning";
             break;
           case 4:
-            message = "Session 2 - Set 2 Video Earning";
+            message = "Session 2 - Set 2 Promotion Earning";
             break;
           case 5:
             message = "Scratch Card Earning";
@@ -93,12 +93,12 @@ function EarningsHistoryPage() {
             ? "Grow"
             : row.earning_type == 5
             ? "Scratch"
-            : "Cash"}
+            : "Promotion"}
         </span>
       ),
     },
     {
-      title: "Amount",
+      title: "Earnings",
       key: "amount",
       render: (index: any, row: any) => (
         <div className="flex items-center justify-start space-x-2">

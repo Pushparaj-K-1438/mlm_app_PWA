@@ -160,7 +160,7 @@ export default function UserManagement() {
           <div>
             <div className="text-sm text-gray-900">
               <div>
-                Cash Wallet: ₹
+                Promotion Wallet: ₹
                 {formatAmount(
                   row?.quiz_total_withdraw,
                   row?.quiz_total_earning

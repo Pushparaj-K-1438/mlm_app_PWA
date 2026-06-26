@@ -65,7 +65,7 @@ const TrainingVideoWarning = ({ children }) => {
                 <div>
                   <h4 className="font-medium text-gray-900">Unlock Features</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    Once completed, you'll have full access to promotion videos, My Pins, Earnings History, Withdraw History, and other features
+                    Once completed, you'll have full access to promotion videos, Product Pin, Earnings History, Withdraw History, and other features
                   </p>
                 </div>
               </div>

@@ -114,7 +114,7 @@ export default function UserOverview() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Cash Wallet</p>
+              <p className="text-sm font-medium text-gray-500">Promotion Wallet</p>
               <p className="text-2xl font-bold text-gray-900">₹{Lib.formatAmount(user?.earnings.cash)}</p>
               <p className="text-xs text-blue-600 flex items-center mt-1">
                 <DollarSign className="w-3 h-3 mr-1" />

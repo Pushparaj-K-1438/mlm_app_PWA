@@ -3,9 +3,7 @@ import {
   Users,
   Share2,
   Crown,
-  TrendingUp,
   User,
-  Gift,
   Link as LinkIcon,
   Plus,
   Copy,
@@ -127,6 +125,18 @@ function ReferralPage() {
     return status === "active" ? "text-green-600" : "text-red-600";
   };
 
+  // Order the promoter list: Trainees first (no promoter level yet), then by
+  // promoter level ascending (Promoter → Promoter 1 → ... → Promoter 4).
+  const isTrainee = (lvl: any) => lvl === null || lvl === undefined || lvl === "";
+  const sortedReferals = [...(referalData?.data || [])].sort((a, b) => {
+    const aTrainee = isTrainee(a?.current_promoter_level);
+    const bTrainee = isTrainee(b?.current_promoter_level);
+    if (aTrainee && !bTrainee) return -1;
+    if (!aTrainee && bTrainee) return 1;
+    if (aTrainee && bTrainee) return 0;
+    return Number(a.current_promoter_level) - Number(b.current_promoter_level);
+  });
+
   if (profileLoading || referalLoading || userDashboardLoading) {
     return <Loader />;
   }
@@ -137,8 +147,8 @@ function ReferralPage() {
       <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Promoters Network</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage your promoters network</p>
+            <h1 className="text-xl font-bold text-gray-900">Promoters</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage your promoters</p>
           </div>
           <button
             onClick={() =>
@@ -166,35 +176,6 @@ function ReferralPage() {
                 <p className="text-xs text-gray-500">Total Promoters</p>
                 <p className="text-xl font-bold text-gray-900">
                   {userDashboardLoading ? '...' : (userDashboardData?.data?.total_referrals || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="ml-3">
-                <p className="text-xs text-gray-500">Active Members</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {" "}
-                  {userDashboardLoading ? '...' : (userDashboardData?.data?.active_referrals || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Gift className="w-5 h-5 text-purple-600" />
-              </div>
-              <div className="ml-3">
-                <p className="text-xs text-gray-500">Total Earnings</p>
-                <p className="text-xl font-bold text-gray-900">
-                  ₹{userDashboardLoading ? '...' : (userDashboardData?.data?.scratch_wallet || 0)}
                 </p>
               </div>
             </div>
@@ -287,7 +268,7 @@ function ReferralPage() {
           <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
             <div className="flex items-center">
               <Users className="w-5 h-5 text-green-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Promoter Genealogy Tree</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Promoters</h3>
             </div>
           </div>
           <div className="p-6">
@@ -313,7 +294,8 @@ function ReferralPage() {
                     </div>
                   )}
                   <div className="text-sm opacity-90">
-                    {profileData?.data?.mobile} • Network Leader
+                    {profileData?.data?.mobile}
+                    {referalData?.data?.length ? " • Captain" : ""}
                   </div>
                 </div>
                 <div className="text-right flex flex-col items-end gap-1">
@@ -330,9 +312,9 @@ function ReferralPage() {
             </div>
 
             {/* Referral Tree */}
-            {referalData?.data?.length ? (
+            {sortedReferals.length ? (
               <div className="space-y-3">
-                {referalData?.data?.map((referalUser) => (
+                {sortedReferals.map((referalUser) => (
                   <div className="ml-4">
                     <div className="flex items-center py-3 px-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
                       <div className="flex items-center flex-1">

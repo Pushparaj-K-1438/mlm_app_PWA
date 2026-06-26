@@ -138,7 +138,7 @@ export default function UserDashboard() {
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-500">Cash Wallet</p>
+              <p className="text-sm font-medium text-gray-500">Promotion Wallet</p>
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <IndianRupee className="w-4 h-4 text-blue-600" />
               </div>

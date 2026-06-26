@@ -12,6 +12,7 @@ interface ScratchCard {
   scratch_card_id: number;
   is_scratched: number;
   amount?: number;
+  msg?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -45,7 +46,7 @@ const ScratchCardPage = () => {
         setScratchCards(prev =>
           prev.map(card =>
             card.id === cardId
-              ? { ...card, is_scratched: 1, amount: response.data?.amount }
+              ? { ...card, is_scratched: 1, amount: response.data?.amount, msg: response.data?.msg }
               : card
           )
         );
@@ -128,7 +129,7 @@ const ScratchCardPage = () => {
                 ₹{card.amount || 0}
               </div>
               <div className="text-sm text-green-600 font-medium">
-                Amount Revealed!
+                {card.msg || "Congratulations!"}
               </div>
             </div>
           ) : isRevealed ? (
@@ -137,10 +138,10 @@ const ScratchCardPage = () => {
                 <Gift className="w-8 h-8 text-blue-500" />
               </div>
               <div className="text-lg font-semibold text-blue-600">
-                Prize Revealed
+                Reward Revealed
               </div>
               <div className="text-sm text-blue-500">
-                Check your wallet for the prize!
+                Check your wallet for the reward!
               </div>
             </div>
           ) : (
@@ -152,7 +153,7 @@ const ScratchCardPage = () => {
                 Tap to Scratch
               </div>
               <div className="text-xs text-gray-500">
-                Reveal your prize!
+                Reveal your reward!
               </div>
             </div>
           )}
@@ -186,7 +187,6 @@ const ScratchCardPage = () => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 safe-area-inset-top">
         <h1 className="text-xl font-bold text-gray-900">Scratch Cards</h1>
-        <p className="text-sm text-gray-600 mt-1">Scratch cards to reveal your prizes!</p>
       </div>
 
       {/* Scratch Cards Grid */}

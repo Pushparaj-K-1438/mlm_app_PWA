@@ -28,7 +28,7 @@ const UserFinanceWidget = () => {
           </div>
         
         </div>
-        <p className="text-xs text-gray-500">Cash Wallet</p>
+        <p className="text-xs text-gray-500">Promotion Wallet</p>
         <p className="text-xl font-bold text-gray-900">
           ₹{Lib.formatAmount(Math.abs(cashWallet))}
         </p>

@@ -165,7 +165,7 @@ const Sidebar = ({
         },
         {
           id: "pin-management",
-          label: "My Pins",
+          label: "Product Pin",
           path: "/portal/user/pin-requests",
           icon: Pin,
           color: "from-teal-500 to-cyan-600",
