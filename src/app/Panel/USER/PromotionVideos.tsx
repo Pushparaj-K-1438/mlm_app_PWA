@@ -801,7 +801,9 @@ function PromotionVideosPage() {
     // forget — the local flag already unlocked the quiz button; this makes it
     // survive a cache clear / new device / refresh.
     try {
-      await markWatchedOnServer({});
+      // Pass "" as the message to suppress the default success toast — this is
+      // a silent background sync, not a user-facing action.
+      await markWatchedOnServer({}, "");
     } catch (e) {
       /* non-blocking */
     }
