@@ -56,6 +56,11 @@ function PromotionVideosPage() {
     error: confirmError,
   } = useActionCall(SERVICE.PROMOTION_VIDEO_QUIZ_CONFIRM);
 
+  // Server-authoritative "video watched" marker (no toast).
+  const { Post: markWatchedOnServer } = useActionCall(
+    SERVICE.PROMOTION_VIDEO_MARK_WATCHED
+  );
+
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -73,26 +78,91 @@ function PromotionVideosPage() {
   // Track if current video has been watched for required duration (for Take Quiz button)
   const [videoWatchCompleted, setVideoWatchCompleted] = useState(false);
 
-  // localStorage key for tracking completed videos
-  const getCompletedVideosKey = () => {
-    const userId = userInfo?.data?.id || 'guest';
-    return `promotion_completed_videos_${userId}`;
-  };
+  // Watch-completion is tracked per *watch slot*, NOT per video id. The same
+  // promotion video can be served again on a later day, in the other session,
+  // in set 2, or after a retry. A video-id flag (the old bug) marked those as
+  // "already watched" and jumped straight to the quiz — and a retry, which
+  // re-serves a fresh video to watch, skipped the watch too. A slot is uniquely
+  // identified by the backend session id + set + video order (+ video id for
+  // safety). So a page refresh mid-watch still resumes, but a new day / retry /
+  // session always requires watching the video again.
+  const slotKey = React.useMemo(() => {
+    const s = data?.data?.user_promoter_session;
+    const videoId = data?.data?.promotion_video?.id;
+    if (!s || !videoId) return null;
+    const currentSet = s.set1_status > 2 ? 2 : 1;
+    const currentOrder =
+      currentSet === 1 ? s.current_video_order_set1 : s.current_video_order_set2;
+    return `${s.id}_s${currentSet}_o${currentOrder}_v${videoId}`;
+  }, [data?.data?.user_promoter_session, data?.data?.promotion_video?.id]);
 
-  // Check if a video is marked as completed
-  const isVideoCompleted = (videoId: string) => {
-    const key = getCompletedVideosKey();
-    const completedVideos = JSON.parse(localStorage.getItem(key) || '{}');
-    return completedVideos[videoId] === true;
-  };
+  // Server-authoritative watched flag: the backend session already tracks the
+  // current set's status (0=assigned, 1=video watched, 2=quiz done, 3=submitted).
+  // If the current set is at VIDEO_WATCHED or beyond, the video for this slot
+  // was already watched — regardless of PWA cache / device. A retry resets the
+  // set back to 0 with a new video order, so it correctly requires re-watching.
+  const serverWatched = React.useMemo(() => {
+    const s = data?.data?.user_promoter_session;
+    if (!s) return false;
+    const currentSet = s.set1_status > 2 ? 2 : 1;
+    const status = currentSet === 1 ? s.set1_status : s.set2_status;
+    return Number(status) >= 1;
+  }, [data?.data?.user_promoter_session]);
 
-  // Mark a video as completed
-  const markVideoCompleted = (videoId: string) => {
-    const key = getCompletedVideosKey();
-    const completedVideos = JSON.parse(localStorage.getItem(key) || '{}');
-    completedVideos[videoId] = true;
-    localStorage.setItem(key, JSON.stringify(completedVideos));
+  // Single-record store: only the current slot's watched-state is kept, so it
+  // can never leak across days/sessions/retries and never grows unbounded.
+  const getWatchStateKey = () => {
+    const userId = userInfo?.data?.id || "guest";
+    return `promotion_watch_state_${userId}`;
+  };
+  const isSlotWatched = (key: string | null) => {
+    if (!key) return false;
+    try {
+      const st = JSON.parse(localStorage.getItem(getWatchStateKey()) || "{}");
+      return st.slot === key && st.done === true;
+    } catch {
+      return false;
+    }
+  };
+  const markSlotWatched = (key: string | null) => {
+    if (!key) return;
+    localStorage.setItem(
+      getWatchStateKey(),
+      JSON.stringify({ slot: key, done: true })
+    );
     setVideoWatchCompleted(true);
+  };
+  const clearSlotWatched = () => {
+    localStorage.removeItem(getWatchStateKey());
+  };
+
+  // Watch-start timestamp is likewise slot-scoped (drives the YouTube wall-clock
+  // countdown). Keyed by slot so a stale start from another video/day/slot is
+  // never read — which previously could auto-complete the watch instantly.
+  const getWatchStartKey = () => {
+    const userId = userInfo?.data?.id || "guest";
+    return `promotion_watch_start_${userId}`;
+  };
+  const readWatchStart = (key: string | null): number | null => {
+    if (!key) return null;
+    try {
+      const st = JSON.parse(localStorage.getItem(getWatchStartKey()) || "{}");
+      if (st.slot === key && st.startedAt) return Number(st.startedAt);
+    } catch {
+      /* ignore */
+    }
+    return null;
+  };
+  const writeWatchStart = (key: string | null) => {
+    if (!key) return;
+    if (readWatchStart(key)) return; // keep the original start time
+    localStorage.setItem(
+      getWatchStartKey(),
+      JSON.stringify({ slot: key, startedAt: Date.now() })
+    );
+  };
+  const clearWatchStart = () => {
+    localStorage.removeItem(getWatchStartKey());
   };
 
   // YouTube video watch time tracking
@@ -215,12 +285,13 @@ function PromotionVideosPage() {
 
     if (!videoId) return;
 
-    // Check if this video was already completed (for persistence)
-    if (isVideoCompleted(videoId)) {
+    // Server is the source of truth: if the backend already recorded this
+    // slot's video as watched, show the quiz straight away (cache-proof). The
+    // slot-scoped localStorage check is a secondary fallback for the brief
+    // window before the server round-trip / offline.
+    if (serverWatched || isSlotWatched(slotKey)) {
       setVideoWatchCompleted(true);
-      // Also clear any pending watch start time since it's already completed
-      const storageKey = `youtube_watch_start_${videoId}`;
-      localStorage.removeItem(storageKey);
+      clearWatchStart();
       return;
     }
 
@@ -257,9 +328,7 @@ function PromotionVideosPage() {
       }
     }
 
-    const storageKey = `youtube_watch_start_${videoId}`;
-
-    // Check if there's a stored start time for THIS video only
+    // Check if there's a stored start time for THIS slot only
     const checkWatchTime = () => {
       // Read from ref to get the latest duration value
       const videoDuration = youtubeDurationRef.current;
@@ -269,15 +338,14 @@ function PromotionVideosPage() {
         return;
       }
 
-      const storedStartTime = localStorage.getItem(storageKey);
-      if (storedStartTime) {
-        const startTime = parseInt(storedStartTime);
+      const startTime = readWatchStart(slotKey);
+      if (startTime) {
         const elapsed = Date.now() - startTime;
         const remaining = videoDuration - elapsed;
 
         if (remaining <= 0) {
           // Video duration completed - clear storage and trigger completion
-          localStorage.removeItem(storageKey);
+          clearWatchStart();
           youtubeWatchStartTimeRef.current = null;
           setYoutubeWatchRemaining(null);
 
@@ -312,7 +380,7 @@ function PromotionVideosPage() {
         clearInterval(youtubeCheckIntervalRef.current);
       }
     };
-  }, [data?.data?.promotion_video?.id]);
+  }, [data?.data?.promotion_video?.id, slotKey, serverWatched]);
 
   // Sync youtubeDurationRef when youtubeVideoDuration state changes
   useEffect(() => {
@@ -322,19 +390,15 @@ function PromotionVideosPage() {
   // Re-check watch time when YouTube duration is fetched
   useEffect(() => {
     if (youtubeVideoDuration > 0) {
-      const videoId = data?.data?.promotion_video?.id;
-      const storageKey = `youtube_watch_start_${videoId}`;
-
       const checkWatchTime = () => {
-        const storedStartTime = localStorage.getItem(storageKey);
-        if (storedStartTime) {
-          const startTime = parseInt(storedStartTime);
+        const startTime = readWatchStart(slotKey);
+        if (startTime) {
           const elapsed = Date.now() - startTime;
           const remaining = youtubeVideoDuration - elapsed;
 
           if (remaining <= 0) {
             // Video duration completed - clear storage and trigger completion
-            localStorage.removeItem(storageKey);
+            clearWatchStart();
             youtubeWatchStartTimeRef.current = null;
             setYoutubeWatchRemaining(null);
 
@@ -353,7 +417,7 @@ function PromotionVideosPage() {
 
       checkWatchTime();
     }
-  }, [youtubeVideoDuration]);
+  }, [youtubeVideoDuration, slotKey]);
 
   // Handle fullscreen change
   useEffect(() => {
@@ -579,13 +643,10 @@ function PromotionVideosPage() {
         // Add special parameter so Android MainActivity.kt can identify and redirect to YouTube app
         const deepLinkUrl = `https://www.youtube.com/watch?v=${videoId}&promo_open=1`;
 
-        // Store the start time in localStorage for tracking
-        const storageKey = `youtube_watch_start_${data?.data?.promotion_video?.id}`;
-        const existingStartTime = localStorage.getItem(storageKey);
-
-        if (!existingStartTime) {
-          // First time clicking - store the start time
-          localStorage.setItem(storageKey, Date.now().toString());
+        // Store the start time (slot-scoped) for tracking. writeWatchStart keeps
+        // the original start if one already exists for this slot.
+        if (!readWatchStart(slotKey)) {
+          writeWatchStart(slotKey);
           youtubeWatchStartTimeRef.current = Date.now();
         }
 
@@ -735,9 +796,14 @@ function PromotionVideosPage() {
   }
 
   const handlevideoWatchCompleted = async () => {
-    const videoId = data?.data?.promotion_video?.id;
-    if (videoId) {
-      markVideoCompleted(videoId);
+    markSlotWatched(slotKey);
+    // Persist the watched state on the server (source of truth). Fire-and-
+    // forget — the local flag already unlocked the quiz button; this makes it
+    // survive a cache clear / new device / refresh.
+    try {
+      await markWatchedOnServer({});
+    } catch (e) {
+      /* non-blocking */
     }
 
     Swal.fire({
@@ -779,6 +845,12 @@ function PromotionVideosPage() {
         if (result.isConfirmed) {
           handleConfirmAndClose();
         } else if (result.dismiss === Swal.DismissReason.cancel) {
+          // Retry = watch a fresh video again. Clear the slot-scoped watch
+          // state so the next video (new slot) requires watching, not a
+          // straight jump back to the quiz.
+          clearSlotWatched();
+          clearWatchStart();
+          setVideoWatchCompleted(false);
           setQuery(true);
           setTakeQuiz(false);
         }
@@ -792,19 +864,11 @@ function PromotionVideosPage() {
       user_promoter_session_id: data?.data?.user_promoter_session?.id,
     });
     if (response) {
-      const videoId = data?.data?.promotion_video?.id;
-
-      if (videoId) {
-        // Clear the completed status for this video since quiz is done
-        const key = getCompletedVideosKey();
-        const completedVideos = JSON.parse(localStorage.getItem(key) || '{}');
-        delete completedVideos[videoId];
-        localStorage.setItem(key, JSON.stringify(completedVideos));
-
-        // Clear the watch start time for this video so it starts fresh next time
-        const watchStartKey = `youtube_watch_start_${videoId}`;
-        localStorage.removeItem(watchStartKey);
-      }
+      // Quiz done for this slot — clear the slot-scoped watch state and start
+      // time so the next slot (and any future re-serve of this video) starts
+      // fresh and requires watching again.
+      clearSlotWatched();
+      clearWatchStart();
 
       // Reset all video-related state
       setYoutubeWatchRemaining(null);
@@ -983,13 +1047,12 @@ function PromotionVideosPage() {
                   }}
                   onEnded={() => {
                     console.log("Promotion video onEnded fired");
-                    const videoId = data?.data?.promotion_video?.id;
                     if (duration > 0 && currentTime > duration * 0.9) {
                       // Mark as completed and show button
-                      markVideoCompleted(videoId);
+                      markSlotWatched(slotKey);
                       handlevideoWatchCompleted();
                     } else if (duration === 0 && currentTime > 0) {
-                      markVideoCompleted(videoId);
+                      markSlotWatched(slotKey);
                       handlevideoWatchCompleted();
                     } else {
                       console.log("Promotion video ended prematurely, not marking as watched");

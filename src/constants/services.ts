@@ -48,6 +48,7 @@ export const SERVICE: any = {
     DAILY_VIDEO_TODAY: 'daily-videos-today',
     DAILY_VIDEO_STATUS_UPDATE: 'daily-videos-watched',
     GET_PROMOTION_VIDEO: 'user-promoter-video-get',
+    PROMOTION_VIDEO_MARK_WATCHED: 'user-promoter-video-watched',
     PROMOTION_VIDEO_QUIZ_UPDATE: 'user-promoter-quiz-result-get',
     PROMOTION_VIDEO_QUIZ_CONFIRM: 'user-promoter-quiz-result-confirmation',
 
