@@ -18,6 +18,14 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        // Force the new build to take over immediately (Option A): activate the
+        // updated service worker without waiting for every tab to close, claim
+        // open pages right away, and purge stale precaches. Combined with
+        // registerType:"autoUpdate" this makes users pick up the fixed app on
+        // their next load instead of lingering on the cached old version.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/be\.starup\.in\/api\/.*/i,
