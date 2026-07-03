@@ -106,7 +106,10 @@ function PromotionVideosPage() {
     if (!s) return false;
     const currentSet = s.set1_status > 2 ? 2 : 1;
     const status = currentSet === 1 ? s.set1_status : s.set2_status;
-    return Number(status) >= 1;
+    // Exactly VIDEO_WATCHED(1). NOT >= 1: status 2 (quiz completed) / 3
+    // (submitted) must not auto-show the quiz button — otherwise a user could
+    // re-take on the same slot without re-watching (the 8-retries bug).
+    return Number(status) === 1;
   }, [data?.data?.user_promoter_session]);
 
   // Single-record store: only the current slot's watched-state is kept, so it
@@ -285,11 +288,13 @@ function PromotionVideosPage() {
 
     if (!videoId) return;
 
-    // Server is the source of truth: if the backend already recorded this
-    // slot's video as watched, show the quiz straight away (cache-proof). The
-    // slot-scoped localStorage check is a secondary fallback for the brief
-    // window before the server round-trip / offline.
-    if (serverWatched || isSlotWatched(slotKey)) {
+    // Server is the SOLE source of truth on (re)load: only if the backend has
+    // recorded this slot's video as watched do we show the quiz straight away.
+    // We deliberately do NOT trust local state here — the backend now hard-gates
+    // the quiz on the same watched flag, so showing the button off a stale local
+    // flag would just get the quiz rejected. (Right after a real watch, the
+    // button is unlocked directly by markSlotWatched, not by this check.)
+    if (serverWatched) {
       setVideoWatchCompleted(true);
       clearWatchStart();
       return;
@@ -796,17 +801,15 @@ function PromotionVideosPage() {
   }
 
   const handlevideoWatchCompleted = async () => {
-    markSlotWatched(slotKey);
-    // Persist the watched state on the server (source of truth). Fire-and-
-    // forget — the local flag already unlocked the quiz button; this makes it
-    // survive a cache clear / new device / refresh.
+    // Tell the server FIRST (source of truth). The backend now hard-gates the
+    // quiz on this watched state, so the button must not unlock until the
+    // server has recorded it. "" suppresses the default success toast.
     try {
-      // Pass "" as the message to suppress the default success toast — this is
-      // a silent background sync, not a user-facing action.
       await markWatchedOnServer({}, "");
     } catch (e) {
-      /* non-blocking */
+      /* non-blocking — the local flag below still unlocks the button */
     }
+    markSlotWatched(slotKey);
 
     Swal.fire({
       icon: "success",
@@ -839,6 +842,12 @@ function PromotionVideosPage() {
         showCancelButton: response?.data?.retry ?? false,
         confirmButtonText: "Confirm & Close",
         cancelButtonText: "Retry Quiz",
+
+        // Force a choice — the user must Confirm (or Retry). Dismissing by
+        // tapping outside would leave the attempt unconfirmed (earning not
+        // banked) and, at the last video of a set, with no way to proceed.
+        allowOutsideClick: false,
+        allowEscapeKey: false,
 
         // Configure colors (optional)
         confirmButtonColor: "#3085d6",
