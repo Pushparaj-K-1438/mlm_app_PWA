@@ -63,6 +63,12 @@ export const SERVICE: any = {
     // active items in admin-insertion order (id ASC).
     SUPPORT_HELPS_LIST: 'support-helps/list',
 
+    // Offer module (user). `offer-status` drives menu visibility + countdown.
+    OFFER_STATUS: 'offer-status',
+    MY_OFFER_POINTS: 'my-offer-points',
+    MY_OFFER_HISTORY: 'my-offer-history',
+    OFFER_TOP_LIST: 'offer-top-list',
+
     // Terms & Conditions — read-only single document. Public endpoint
     // (admin upserts the same row via the admin web).
     TERMS_AND_CONDITIONS: 'terms-and-conditions',

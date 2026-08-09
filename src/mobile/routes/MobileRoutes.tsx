@@ -61,6 +61,10 @@ const Repurchase = Loadable(
 const SBILife = Loadable(
   lazy(() => import("@/app/Panel/USER/SBILife"))
 );
+const Offers = Loadable(lazy(() => import("@/app/Panel/USER/Offers")));
+const OfferHistory = Loadable(
+  lazy(() => import("@/app/Panel/USER/OfferHistory"))
+);
 const BoxRequests = Loadable(
   lazy(() => import("@/app/Panel/USER/BoxRequests"))
 );
@@ -173,6 +177,14 @@ export default function MobileRoutes(): React.ReactElement | null {
       {
         path: "portal/user/box-requests",
         element: <BoxRequests />,
+      },
+      {
+        path: "portal/user/offers",
+        element: <Offers />,
+      },
+      {
+        path: "portal/user/offer-history",
+        element: <OfferHistory />,
       },
       {
         path: "portal/user/referrals",

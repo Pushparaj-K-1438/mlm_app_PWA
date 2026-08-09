@@ -26,6 +26,7 @@ import {
   HelpCircle,
   FileText,
   MessageSquare,
+  Gift,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -40,6 +41,8 @@ import { cn } from "@/lib/utils";
 import { ROLE } from "@/constants/others";
 import logo from "@/assets/logo.png";
 import BirthdayModal from "@/components/BirthdayModal";
+import { useGetCall } from "@/hooks";
+import { SERVICE } from "@/constants/services";
 
 interface MobileLayoutProps {
   children?: ReactNode;
@@ -175,6 +178,14 @@ const getUserMenuItems = (role: number) => {
         path: "/portal/user/promotion-videos",
         icon: Trophy,
         color: "from-amber-500 to-orange-600",
+      },
+      // Filtered out at render time unless the offer is active (see MobileLayout).
+      {
+        id: "offers",
+        label: "Offer",
+        path: "/portal/user/offers",
+        icon: Gift,
+        color: "from-rose-500 to-pink-600",
       },
       {
         id: "youtube-channels",
@@ -345,7 +356,17 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
   const hideNavPaths = ["/login", "/register"];
   const shouldHideNav = hideNavPaths.some((path) => location.pathname === path);
 
-  const menuItems = getUserMenuItems(role);
+  // The Offer menu is shown only while an offer is switched on by the admin.
+  // (Users still see a countdown inside if it hasn't started yet.) Fetched only
+  // for end-users — the endpoint is behind the user guard.
+  const { data: offerStatus } = useGetCall(SERVICE.OFFER_STATUS, {
+    avoidFetch: role !== ROLE.USER,
+  });
+  const offerVisible = Boolean(offerStatus?.data?.is_visible);
+
+  const menuItems = getUserMenuItems(role).filter(
+    (item) => item.id !== "offers" || offerVisible
+  );
   const bottomNavItems = getBottomNavItems(role);
 
   // Get user info for header
