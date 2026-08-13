@@ -8,6 +8,10 @@ export const getVideoPlayerConfig = () => ({
       'webkit-playsinline': true,
       allowFullScreen: true,
       webkitAllowFullScreen: true,
+      // Only fetch the header (a few KB) until the user actually presses play,
+      // so opening the page without watching costs almost no data. Duration
+      // still resolves, so the timer/progress UI keeps working.
+      preload: 'metadata',
     }
   },
   youtube: {
