@@ -87,18 +87,31 @@ function OffersPage() {
     const serverMs = new Date(status.server_time).getTime();
     const skew = serverMs - Date.now(); // server clock − device clock
 
+    // Guard so the "time's up" refetch can only fire once. Without it, a few
+    // seconds of clock skew between server and device would leave `left <= 0`
+    // while the server still reports not-started, and every tick would fire
+    // another request — one API call per second, forever.
+    let reloaded = false;
+    let id: ReturnType<typeof setInterval> | null = null;
+
     const tick = () => {
       const left = startMs - (Date.now() + skew);
       setRemaining(Math.max(0, left));
-      if (left <= 0) {
+      if (left <= 0 && !reloaded) {
+        reloaded = true;
+        if (id) clearInterval(id);
         // Time's up — pull fresh status so the page flips to the live view.
         refetchStatus({});
       }
     };
 
     tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    if (!reloaded) {
+      id = setInterval(tick, 1000);
+    }
+    return () => {
+      if (id) clearInterval(id);
+    };
   }, [status, isActive, hasStarted]);
 
   // Load the live data once the offer is running.

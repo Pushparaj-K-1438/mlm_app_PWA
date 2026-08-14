@@ -1,42 +1,34 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/Toaster";
 import { Toaster as HotToaster } from "react-hot-toast";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import AllRoutes from "./routes/AllRoutes";
+// NOTE: the desktop tree (routes/AllRoutes + routes/ROUTE-PATHS/*) is dead — it
+// was behind a hard-coded `isMobileApp = true`, so it could never render, yet
+// importing it here dragged PortalLayout, AuthLayout, Register and
+// WithDrawRequest into the main bundle for every user. The files are still on
+// disk; re-add the import if the desktop tree is ever brought back.
 import MobileRoutes from "./mobile/routes/MobileRoutes";
 import { AuthProvider } from "./context/AuthContext";
 // import { ThemeProvider } from "./context/ThemeContext";
 import { DataProvider } from "./context/DataContext";
 import ConnectionError from "@/components/ConnectionError";
-const queryClient = new QueryClient();
 
+// This app is mobile-only: MobileRoutes is the single route tree that ships.
+//
+// @tanstack/react-query was previously mounted here as a provider, but nothing
+// in the app ever called useQuery/useMutation (all data goes through the
+// useGetCall / useActionCall hooks), so it was removed — it was pure weight in
+// the main bundle. Re-add QueryClientProvider if react-query is ever adopted.
 const App: React.FC = () => {
-  // Detect if the app is running as a mobile app or on a mobile device
-  // const isMobileApp = useMemo(() => {
-  //   // Check if it's a PWA (standalone mode)
-  //   const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-  //                       (window.navigator as any).standalone === true;
-
-  //   // Check if mobile device
-  //   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-  //     navigator.userAgent
-  //   ) || window.innerWidth < 768;
-  //   // Use mobile routes if it's a PWA or a small screen device
-  //   return isStandalone || isMobileDevice;
-  // }, []);
-    const isMobileApp=true;
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+    <BrowserRouter>
         {/* <ThemeProvider> */}
         <AuthProvider>
           <DataProvider>
             <TooltipProvider>
-              {isMobileApp ? <MobileRoutes /> : <AllRoutes />}
+              <MobileRoutes />
               <Toaster />
               <HotToaster />
               <Sonner />
@@ -44,9 +36,8 @@ const App: React.FC = () => {
             </TooltipProvider>
           </DataProvider>
         </AuthProvider>
-        {/* </ThemeProvider> */}
-      </BrowserRouter>
-    </QueryClientProvider>
+      {/* </ThemeProvider> */}
+    </BrowserRouter>
   );
 };
 
