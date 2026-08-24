@@ -63,6 +63,12 @@ export const SERVICE: any = {
     // active items in admin-insertion order (id ASC).
     SUPPORT_HELPS_LIST: 'support-helps/list',
 
+    // Company Docs — active documents, view-only in the app.
+    COMPANY_DOCUMENTS_LIST: 'company-documents/list',
+
+    // Which user menus the admin has switched on.
+    USER_MENU_SETTINGS: 'user-menu-settings',
+
     // Offer module (user). `offer-status` drives menu visibility + countdown.
     OFFER_STATUS: 'offer-status',
     MY_OFFER_POINTS: 'my-offer-points',

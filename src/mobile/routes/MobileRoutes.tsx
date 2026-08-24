@@ -62,6 +62,9 @@ const SBILife = Loadable(
   lazy(() => import("@/app/Panel/USER/SBILife"))
 );
 const Offers = Loadable(lazy(() => import("@/app/Panel/USER/Offers")));
+const CompanyDocs = Loadable(
+  lazy(() => import("@/app/Panel/USER/CompanyDocs"))
+);
 const OfferHistory = Loadable(
   lazy(() => import("@/app/Panel/USER/OfferHistory"))
 );
@@ -181,6 +184,10 @@ export default function MobileRoutes(): React.ReactElement | null {
       {
         path: "portal/user/offers",
         element: <Offers />,
+      },
+      {
+        path: "portal/user/company-docs",
+        element: <CompanyDocs />,
       },
       {
         path: "portal/user/offer-history",

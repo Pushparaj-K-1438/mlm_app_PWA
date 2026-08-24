@@ -278,6 +278,15 @@ const getUserMenuItems = (role: number) => {
         icon: FileText,
         color: "from-slate-500 to-gray-600",
       },
+      // Sits directly below Terms & Conditions, matching the admin sidebar.
+      // Hidden unless the admin switches the menu on (see MobileLayout filter).
+      {
+        id: "company-docs",
+        label: "Company Docs",
+        path: "/portal/user/company-docs",
+        icon: FileText,
+        color: "from-cyan-500 to-teal-600",
+      },
       {
         id: "profile-settings",
         label: "Profile Settings",
@@ -364,9 +373,19 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
   });
   const offerVisible = Boolean(offerStatus?.data?.is_visible);
 
-  const menuItems = getUserMenuItems(role).filter(
-    (item) => item.id !== "offers" || offerVisible
-  );
+  // Admin-controlled menu switches (see AppSetting::MENU_KEYS). Defaults to
+  // visible so a failed/slow call never hides a menu that should be there.
+  const { data: menuSettings } = useGetCall(SERVICE.USER_MENU_SETTINGS, {
+    avoidFetch: role !== ROLE.USER,
+  });
+  const menuFlags = menuSettings?.data ?? {};
+  const isMenuOn = (key: string) => menuFlags[key] !== false;
+
+  const menuItems = getUserMenuItems(role).filter((item) => {
+    if (item.id === "offers") return offerVisible;
+    if (item.id === "company-docs") return isMenuOn("company_docs");
+    return true;
+  });
   const bottomNavItems = getBottomNavItems(role);
 
   // Get user info for header
