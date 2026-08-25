@@ -96,22 +96,6 @@ function PromotionVideosPage() {
     return `${s.id}_s${currentSet}_o${currentOrder}_v${videoId}`;
   }, [data?.data?.user_promoter_session, data?.data?.promotion_video?.id]);
 
-  // Server-authoritative watched flag: the backend session already tracks the
-  // current set's status (0=assigned, 1=video watched, 2=quiz done, 3=submitted).
-  // If the current set is at VIDEO_WATCHED or beyond, the video for this slot
-  // was already watched — regardless of PWA cache / device. A retry resets the
-  // set back to 0 with a new video order, so it correctly requires re-watching.
-  const serverWatched = React.useMemo(() => {
-    const s = data?.data?.user_promoter_session;
-    if (!s) return false;
-    const currentSet = s.set1_status > 2 ? 2 : 1;
-    const status = currentSet === 1 ? s.set1_status : s.set2_status;
-    // Exactly VIDEO_WATCHED(1). NOT >= 1: status 2 (quiz completed) / 3
-    // (submitted) must not auto-show the quiz button — otherwise a user could
-    // re-take on the same slot without re-watching (the 8-retries bug).
-    return Number(status) === 1;
-  }, [data?.data?.user_promoter_session]);
-
   // Single-record store: only the current slot's watched-state is kept, so it
   // can never leak across days/sessions/retries and never grows unbounded.
   const getWatchStateKey = () => {
@@ -288,13 +272,15 @@ function PromotionVideosPage() {
 
     if (!videoId) return;
 
-    // Server is the SOLE source of truth on (re)load: only if the backend has
-    // recorded this slot's video as watched do we show the quiz straight away.
-    // We deliberately do NOT trust local state here — the backend now hard-gates
-    // the quiz on the same watched flag, so showing the button off a stale local
-    // flag would just get the quiz rejected. (Right after a real watch, the
-    // button is unlocked directly by markSlotWatched, not by this check.)
-    if (serverWatched) {
+    // Restore "already watched" after a refresh / remount. The key is scoped to
+    // this exact slot (session + set + video order + video id), so it can never
+    // leak into a new day, a different session, or a retry — those all produce
+    // a different key and correctly require watching again.
+    //
+    // This has to be the check: the app previously relied on a server-side
+    // "video watched" status, but that endpoint no longer exists, so the flag
+    // was never set and the quiz button disappeared on every refresh.
+    if (isSlotWatched(slotKey)) {
       setVideoWatchCompleted(true);
       clearWatchStart();
       return;
@@ -385,7 +371,7 @@ function PromotionVideosPage() {
         clearInterval(youtubeCheckIntervalRef.current);
       }
     };
-  }, [data?.data?.promotion_video?.id, slotKey, serverWatched]);
+  }, [data?.data?.promotion_video?.id, slotKey]);
 
   // Sync youtubeDurationRef when youtubeVideoDuration state changes
   useEffect(() => {

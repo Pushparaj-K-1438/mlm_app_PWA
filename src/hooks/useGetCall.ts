@@ -83,10 +83,24 @@ const useGetCall = (services: string, initialOptions: OptionsProps = {}) => {
 
                 if (!response.ok) {
                     if (response.status === 401) {
+                        // Tell the user WHY they were signed out. The server
+                        // distinguishes a real expiry from "logged in on another
+                        // device" (single-session enforcement) — silently
+                        // bouncing to /login made that look like a random bug.
+                        try {
+                            const body: any = await response.json();
+                            if (body?.message) {
+                                toast.error(
+                                    body?.code === "session_expired"
+                                        ? "You were signed out because this account was used on another device."
+                                        : body.message
+                                );
+                            }
+                        } catch (e) {
+                            /* no JSON body — fall through to the redirect */
+                        }
                         Lib.removeCookies("session-token");
-                        // router.replace("/login");
                         navigate.replace("/login")
-                        // throw new Error("Session Expired please logisn"); // Temporarily
                     } else if (response.status === 500) {
                         throw new Error("Server Error, Please Try Later");
                     } else if (response.status === 400) {
