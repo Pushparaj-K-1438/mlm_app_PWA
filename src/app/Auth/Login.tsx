@@ -6,6 +6,7 @@ import { useActionCall, useQueryParams } from "@/hooks";
 import { useFormik } from "formik";
 import { SERVICE } from "@/constants/services";
 import logo from '@/assets/logo.png';
+import { getDeviceId, getScreenSize } from "@/utils/deviceId";
 
 export default function Login() {
   const { login } = useAuth();
@@ -21,7 +22,16 @@ export default function Login() {
       password: "",
     },
     onSubmit: async (values) => {
-      let response: any = await Post(values, "Login successfull");
+      // Sent so the admin login log can tell devices apart — an IP only
+      // identifies the network, which a whole household or carrier shares.
+      let response: any = await Post(
+        {
+          ...values,
+          device_id: getDeviceId(),
+          screen: getScreenSize(),
+        },
+        "Login successfull"
+      );
       if (response) {
         login(response.data.access_token);
       }
