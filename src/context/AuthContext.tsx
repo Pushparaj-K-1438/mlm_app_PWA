@@ -6,7 +6,7 @@ import axiosInstance from "@/utils/CustomAxios";
 import { API_AUTH_USER } from "@/utils/http/apiPaths";
 import Lib from "@/utils/Lib";
 import { useGetCall, useQueryParams } from "@/hooks";
-import { SERVICE } from "@/constants/services";
+import { BASE_URL, SERVICE } from "@/constants/services";
 import { ROLE } from "@/constants/others";
 
 // PWA is the end-user surface only. Admin/super-admin must use the web console.
@@ -66,7 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Stale admin session — explain why we're kicking them back to login.
         toast.error("Admin accounts must use the web console.");
       }
-      logout(true);
+      // Clear only — no redirect. The route tree already sends a role-less
+      // visitor to /login, and forcing a redirect here would throw people off
+      // the public /register page.
+      clearSession();
+      setIsLoading(false);
     }
   }, [location.pathname]);
 
@@ -81,22 +85,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   };
 
-  // Function to handle logout
-  const logout = (redirect: boolean = false) => {
-    setIsLoading(false);
-    setRole(null);
+  /**
+   * Wipe every trace of the signed-in user from this device.
+   *
+   * Deliberately targeted, not a localStorage.clear(): the device id used by
+   * the admin login history must survive, otherwise every logout would look
+   * like a brand-new device and multi-account detection would go blind.
+   */
+  const clearSession = () => {
     Lib.removeCookies("session-token");
+    setRole(null);
+    setUser(null);
+  };
+
+  /**
+   * User-initiated logout.
+   *
+   * The server call is the part that actually matters. The token is a JWT — it
+   * stays valid on its own for days, so clearing it locally only *looks* like a
+   * logout. Telling the backend clears the session marker, which kills the
+   * token everywhere: even if a copy survived on the phone, reopening the app
+   * can no longer get past the API.
+   *
+   * Fire-and-forget on purpose — a user on a dead connection must still be able
+   * to sign out of the screen in front of them.
+   */
+  const logout = (redirect: boolean = false) => {
+    const token = Lib.getCookies("session-token");
+
+    if (token) {
+      fetch(`${BASE_URL}/${SERVICE.LOGOUT}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+        keepalive: true, // survives the navigation away from this screen
+      }).catch(() => {
+        /* offline or server down — the local session is cleared regardless */
+      });
+    }
+
+    clearSession();
+    setIsLoading(false);
+    navigate.replace("/login");
   };
 
   const login = (token: string | undefined | null) => {
     let decordToken: JwtPayload = token ? Lib.DecodeJwt(token) : null;
     if (!token || decordToken?.role === undefined) {
-      logout();
+      // Already on the login screen — clear state without bouncing the route.
+      clearSession();
       return;
     }
     if (!ALLOWED_ROLES.includes(decordToken.role)) {
       toast.error("Admin accounts must use the web console.");
-      logout();
+      clearSession();
       return;
     }
     Lib.setCookies({

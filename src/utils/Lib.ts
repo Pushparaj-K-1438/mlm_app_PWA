@@ -10,10 +10,43 @@ const Lib = {
     setCookies({ name = "cookies", value = "", exp = 1 }: { name: string, value: string, exp: number | Date | undefined }) {
         Cookies.set(name, value, {
             expires: exp,
+            path: "/",
         });
     },
+    /**
+     * Delete a cookie for real.
+     *
+     * A browser will only drop a cookie when the delete matches the exact
+     * path/domain it was written with — otherwise the write silently does
+     * nothing and the old cookie is still there on the next launch. That is how
+     * a "logged out" user ends up back on the dashboard after reopening the
+     * app, so this sweeps every plausible variant instead of trusting one.
+     * Writing an already-expired cookie is harmless if it doesn't exist.
+     */
     removeCookies(keyName: string = '') {
         Cookies.remove(keyName);
+        Cookies.remove(keyName, { path: "/" });
+
+        try {
+            const expired = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            const host = window.location.hostname;
+
+            // "/", the current path, and every ancestor of it.
+            const paths = new Set<string>(["/", window.location.pathname]);
+            let walk = "";
+            for (const segment of window.location.pathname.split("/").filter(Boolean)) {
+                walk += `/${segment}`;
+                paths.add(walk);
+            }
+
+            paths.forEach((path) => {
+                document.cookie = `${keyName}=; ${expired}; path=${path}`;
+                document.cookie = `${keyName}=; ${expired}; path=${path}; domain=${host}`;
+                document.cookie = `${keyName}=; ${expired}; path=${path}; domain=.${host}`;
+            });
+        } catch (e) {
+            /* document unavailable — the js-cookie removes above still ran */
+        }
     },
     getCookies(keyName: string) {
         return Cookies.get(keyName);

@@ -3,6 +3,9 @@ export const SERVICE: any = {
     //Auth
     LOGIN: "auth/login",
     REGISTER: "auth/register",
+    // Clears the server-side session marker so the token dies immediately
+    // instead of staying valid for the rest of its lifetime.
+    LOGOUT: "api-logout",
 
     // Auth Routes
     DAILYVIDEOS: "daily-videos",
