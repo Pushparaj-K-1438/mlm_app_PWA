@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const token = Lib.getCookies("session-token");
 
     if (token) {
-      fetch(`${BASE_URL}/${SERVICE.LOGOUT}`, {
+      fetch(`${BASE_URL}${SERVICE.LOGOUT}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
