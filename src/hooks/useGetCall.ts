@@ -100,7 +100,14 @@ const useGetCall = (services: string, initialOptions: OptionsProps = {}) => {
                             /* no JSON body — fall through to the redirect */
                         }
                         Lib.removeCookies("session-token");
-                        navigate.replace("/login")
+                        navigate.replace("/login");
+                        // MUST return. The body stream above is already
+                        // consumed, so falling through to the response.json()
+                        // below throws a TypeError, which the error handler
+                        // then mistakes for a dead connection and covers the
+                        // login screen with the "Connection Problem" overlay.
+                        setLoading(false);
+                        return;
                     } else if (response.status === 500) {
                         throw new Error("Server Error, Please Try Later");
                     } else if (response.status === 400) {
