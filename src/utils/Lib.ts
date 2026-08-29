@@ -118,9 +118,20 @@ const Lib = {
 
         return `${STORAGE_BASE_URL}/storage/uploads/final/${fileName}`
     },
+    /**
+     * Recover the original upload name from the stored "{uuid}_{original}".
+     *
+     * Only a genuine UUID prefix is stripped. The old version split on "_"
+     * and kept the last piece, which mangled any real filename containing an
+     * underscore ("GST_March_2026.pdf" came back as "2026.pdf").
+     */
     getFileName(uniqueFilename = '') {
-        let filename = uniqueFilename.split("_");
-        return filename[filename.length - 1] ?? ''
+        const name = String(uniqueFilename ?? '');
+        const stripped = name.replace(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/i,
+            ''
+        );
+        return stripped !== '' ? stripped : name;
     },
     selectOptions(value, OPTIONS: any = []) {
         return OPTIONS.find((item: any) => item.value == value)
