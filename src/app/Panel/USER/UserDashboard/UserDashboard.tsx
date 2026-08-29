@@ -23,6 +23,7 @@ import logo from '@/assets/logo.png';
 import { useGetCall } from '@/hooks';
 import { SERVICE } from "@/constants/services";
 import Lib from '@/utils/Lib';
+import OfferTopPerformer from '@/components/OfferTopPerformer';
 
 export default function UserDashboard() {
   const { user } = useAuth();
@@ -176,6 +177,10 @@ export default function UserDashboard() {
             <p className="text-2xl font-bold text-gray-900">{userDataLoading ? '...' : (userData?.data?.total_referrals || 0)}</p>
           </div>
         </div>
+
+        {/* Offer leader. Renders nothing unless the offer is active,
+            has started, and has someone on the board. */}
+        <OfferTopPerformer />
 
         {/* Current Promoter Level Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
