@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Truck,
   Hand,
+  PackageX,
 } from "lucide-react";
 import { useGetCall, useActionCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
@@ -28,6 +29,7 @@ const STATUS_MAP: Record<number, { label: string; cls: string; Icon: any }> = {
   1: { label: "Requested", cls: "bg-amber-100 text-amber-800", Icon: Clock },
   2: { label: "Sent", cls: "bg-blue-100 text-blue-800", Icon: Send },
   3: { label: "Delivered", cls: "bg-green-100 text-green-800", Icon: CheckCircle },
+  4: { label: "Not Received", cls: "bg-red-100 text-red-800", Icon: PackageX },
 };
 
 // Base Promoter (level 0) = "Energy Plus"; all other levels = "Health Plus".
@@ -45,6 +47,9 @@ export default function BoxRequests() {
   const { data, loading, setQuery } = useGetCall(SERVICE.BOX_REQUESTS_LIST);
   const { Post: requestBoxes, loading: requesting } = useActionCall(SERVICE.BOX_REQUEST);
   const { Post: markDelivered, loading: delivering } = useActionCall(SERVICE.BOX_DELIVERED);
+  const { Post: markNotReceived, loading: reporting } = useActionCall(
+    SERVICE.BOX_NOT_RECEIVED
+  );
 
   const meta = data?.meta || {};
   const list: any[] = data?.data || [];
@@ -97,6 +102,19 @@ export default function BoxRequests() {
 
   const onDelivered = async (id: number) => {
     const resp = await markDelivered({ id });
+    if (resp) refresh();
+  };
+
+  /**
+   * Report a dispatched batch as never arrived. Confirmed first — it is not
+   * the button you want to hit by accident next to "Mark as Delivered".
+   */
+  const onNotReceived = async (id: number) => {
+    const ok = window.confirm(
+      "Report this product as not received? The team will check and send it again if needed."
+    );
+    if (!ok) return;
+    const resp = await markNotReceived({ id });
     if (resp) refresh();
   };
 
@@ -364,14 +382,39 @@ export default function BoxRequests() {
                   )}
 
                   {Number(b.status) === 2 && (
-                    <button
-                      onClick={() => onDelivered(b.id)}
-                      disabled={delivering}
-                      className="mt-3 w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium disabled:opacity-50 active:scale-95 transition-transform"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Mark as Delivered
-                    </button>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => onDelivered(b.id)}
+                        disabled={delivering || reporting}
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium disabled:opacity-50 active:scale-95 transition-transform"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Delivered
+                      </button>
+                      <button
+                        onClick={() => onNotReceived(b.id)}
+                        disabled={delivering || reporting}
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2.5 rounded-xl border border-red-200 bg-white text-red-700 font-medium disabled:opacity-50 active:scale-95 transition-transform"
+                      >
+                        <PackageX className="w-4 h-4 mr-1" />
+                        Not Received
+                      </button>
+                    </div>
+                  )}
+
+                  {Number(b.status) === 4 && (
+                    <div className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3">
+                      <p className="text-sm font-medium text-red-800">
+                        Reported as not received
+                      </p>
+                      <p className="mt-0.5 text-xs text-red-700">
+                        {b.not_received_at_formatted
+                          ? `Reported on ${b.not_received_at_formatted}. `
+                          : ""}
+                        The team is checking this and will send it again if
+                        needed.
+                      </p>
+                    </div>
                   )}
                 </div>
               );

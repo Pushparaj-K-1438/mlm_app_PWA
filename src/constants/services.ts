@@ -88,7 +88,8 @@ export const SERVICE: any = {
     // Promoter boxes (product allocation + delivery tracking).
     BOX_REQUESTS_LIST: 'box-requests/list',
     BOX_REQUEST: 'box-requests/request',
-    BOX_DELIVERED: 'box-requests/delivered'
+    BOX_DELIVERED: 'box-requests/delivered',
+    BOX_NOT_RECEIVED: 'box-requests/not-received'
 
 
 }
