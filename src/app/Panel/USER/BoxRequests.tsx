@@ -10,6 +10,8 @@ import {
   Calendar,
   Phone,
   AlertCircle,
+  Truck,
+  Hand,
 } from "lucide-react";
 import { useGetCall, useActionCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
@@ -20,6 +22,7 @@ import InputText from "@/components/ui/InputText";
 import InputTextArea from "@/components/ui/InputTextArea";
 import SelectInput from "@/components/ui/SelectInput";
 import toast from "react-hot-toast";
+import CopyClipBoard from "@/components/CopyClip";
 
 const STATUS_MAP: Record<number, { label: string; cls: string; Icon: any }> = {
   1: { label: "Requested", cls: "bg-amber-100 text-amber-800", Icon: Clock },
@@ -307,6 +310,58 @@ export default function BoxRequests() {
                       {s.label}
                     </span>
                   </div>
+
+                  {/* How it was dispatched. Shown from Sent onwards — a
+                      delivered batch keeps the record, and a courier number
+                      is exactly what someone needs when chasing a parcel. */}
+                  {b.dispatch_label && (
+                    <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        {Number(b.dispatch_method) === 2 ? (
+                          <Truck className="w-4 h-4 text-indigo-600" />
+                        ) : (
+                          <Hand className="w-4 h-4 text-teal-600" />
+                        )}
+                        <span className="text-xs font-semibold text-gray-800">
+                          Sent by {b.dispatch_label}
+                        </span>
+                      </div>
+
+                      {Number(b.dispatch_method) === 2 ? (
+                        <div className="space-y-1 text-sm text-gray-700">
+                          {b.courier_name ? (
+                            <div className="flex justify-between gap-3">
+                              <span className="text-gray-500">Courier</span>
+                              <span className="font-medium text-right break-words">
+                                {b.courier_name}
+                              </span>
+                            </div>
+                          ) : null}
+                          {b.courier_number ? (
+                            <div className="flex justify-between gap-3">
+                              <span className="text-gray-500">Tracking no</span>
+                              <span className="font-medium text-right break-all">
+                                <CopyClipBoard text={b.courier_number} />
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="flex justify-between gap-3 text-sm text-gray-700">
+                          <span className="text-gray-500">Collected on</span>
+                          <span className="font-medium">
+                            {b.collected_date_formatted ?? "-"}
+                          </span>
+                        </div>
+                      )}
+
+                      {b.sent_at_formatted ? (
+                        <p className="mt-1.5 text-[11px] text-gray-400">
+                          Dispatched {b.sent_at_formatted}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
 
                   {Number(b.status) === 2 && (
                     <button
