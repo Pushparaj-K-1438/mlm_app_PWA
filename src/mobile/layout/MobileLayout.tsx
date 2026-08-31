@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { ROLE } from "@/constants/others";
 import logo from "@/assets/logo.png";
 import BirthdayModal from "@/components/BirthdayModal";
+import ProductStatusReminder from "@/components/ProductStatusReminder";
 import { useGetCall } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 
@@ -522,6 +523,10 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
       <div className={cn("w-full", isLoggedIn && !shouldHideNav && "pt-16")}>
         {children || <Outlet />}
       </div>
+
+      {/* Reminds the user to confirm a dispatched product. Lives in the shell
+          so it follows them across every menu until they act. */}
+      {isLoggedIn && role === ROLE.USER && <ProductStatusReminder />}
 
       {/* Bottom Navigation Bar - Only show when logged in */}
       {isLoggedIn && !shouldHideNav && (

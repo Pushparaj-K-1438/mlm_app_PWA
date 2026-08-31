@@ -89,7 +89,8 @@ export const SERVICE: any = {
     BOX_REQUESTS_LIST: 'box-requests/list',
     BOX_REQUEST: 'box-requests/request',
     BOX_DELIVERED: 'box-requests/delivered',
-    BOX_NOT_RECEIVED: 'box-requests/not-received'
+    BOX_NOT_RECEIVED: 'box-requests/not-received',
+    BOX_STATUS_REMINDERS: 'box-requests/status-reminders'
 
 
 }
