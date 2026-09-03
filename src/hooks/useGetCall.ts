@@ -120,7 +120,19 @@ const useGetCall = (services: string, initialOptions: OptionsProps = {}) => {
                         setLoading(false);
                         return;
                     } else {
-                        throw new Error("Network Error");
+                        // Anything else (403 in particular — e.g. invoice
+                        // downloads switched off in App Settings). The API
+                        // sends a JSON reason; showing it beats "Network
+                        // Error", which sends people hunting for a
+                        // connectivity problem that isn't there.
+                        let message = "Network Error";
+                        try {
+                            const body: any = await response.json();
+                            if (body?.message) message = body.message;
+                        } catch (e) {
+                            /* not JSON — keep the generic message */
+                        }
+                        throw new Error(message);
                     }
                 }
 
@@ -133,7 +145,17 @@ const useGetCall = (services: string, initialOptions: OptionsProps = {}) => {
                     a.download = Options?.downloadFilename ?? 'download.xlsx'
                     document.body.appendChild(a);
                     a.click();
-                    return window.URL.revokeObjectURL(createdURLObj);
+                    a.remove();
+                    // Revoking synchronously here used to cancel the download
+                    // before the browser had finished reading the blob —
+                    // reliably so on mobile, where nothing was ever saved.
+                    // Give it a beat, then release the memory.
+                    setTimeout(() => window.URL.revokeObjectURL(createdURLObj), 1000);
+                    // MUST clear loading. The old early `return` skipped the
+                    // setLoading(false) below, so any export button stayed
+                    // stuck on its loading label forever.
+                    setLoading(false);
+                    return;
                 }
 
                 const jsonData = await response.json();
