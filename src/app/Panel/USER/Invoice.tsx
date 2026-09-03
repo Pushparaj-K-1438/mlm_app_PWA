@@ -1,6 +1,8 @@
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Download, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
 import { useGetCall, useQueryParams } from "@/hooks";
+import { BASE_URL } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
 import logo from "@/assets/logo.png";
 
@@ -15,9 +17,9 @@ const money = (value: any) =>
  *
  * Every number comes from the server (InvoiceBuilder) — nothing is calculated
  * here, so the printed document can never disagree with the database. This
- * on-screen version is for reading; "Download" fetches the same data
- * rendered server-side to a real PDF (Dompdf) and saves it directly — a
- * one-click file, not the browser's print dialog.
+ * on-screen version is for reading; "Download" opens a short-lived signed
+ * link to the server-rendered PDF, which the browser (or the APK wrapper)
+ * saves natively — not the print dialog, and not a blob.
  */
 export default function Invoice() {
   const { id } = useParams();
@@ -27,26 +29,48 @@ export default function Invoice() {
     `box-requests/${id}/invoice`
   );
 
-  // Same endpoint family, PDF flavour. avoidFetch: only pulled on click.
-  const { fetchApi: downloadPdf, loading: downloading } = useGetCall(
-    `box-requests/${id}/invoice/download`,
+  // Asks the server for a short-lived signed link. avoidFetch: only on click.
+  const { fetchApi: fetchLink, loading: downloading } = useGetCall(
+    `box-requests/${id}/invoice/link`,
     { avoidFetch: true }
   );
 
   const inv = data?.data;
 
-  const handleDownload = () => {
-    // The invoice number can read "startup/26-27/001" — "/" is not safe in a
-    // filename, so it is swapped for "-" the same way the server names the
-    // attachment. Falls back to the batch id if the number isn't known yet.
-    const safeNo = String(inv?.invoice_no ?? id ?? "invoice").replace(
-      /\//g,
-      "-"
-    );
-    downloadPdf({
-      exports: true,
-      downloadFilename: `invoice-${safeNo}.pdf`,
-    });
+  /**
+   * Download the invoice.
+   *
+   * Deliberately NOT a blob + <a download>: this app also ships wrapped as an
+   * APK, and an Android WebView cannot hand a blob URL to the system download
+   * manager — the click simply does nothing, with no error. Navigating to a
+   * real URL is an ordinary HTTP GET the wrapper (or the browser) knows how to
+   * save, and the server sends it as an attachment.
+   *
+   * The window is opened synchronously, before the await, or a pop-up blocker
+   * treats it as programmatic and swallows it.
+   */
+  const handleDownload = async () => {
+    const tab = window.open("", "_blank");
+    try {
+      const res: any = await fetchLink({});
+      const path = res?.data?.url;
+      if (!path) throw new Error("Could not prepare the invoice");
+
+      // The link is signed relatively, so point it at the API's own origin
+      // rather than this app's.
+      const url = new URL(path, BASE_URL).toString();
+
+      if (tab) {
+        tab.location.href = url;
+      } else {
+        // Pop-up blocked — fall back to navigating this window. The response
+        // is an attachment, so the page itself is not replaced.
+        window.location.href = url;
+      }
+    } catch (e: any) {
+      tab?.close();
+      toast.error(e?.message || "Could not download the invoice");
+    }
   };
 
   if (loading) return <Loader />;
