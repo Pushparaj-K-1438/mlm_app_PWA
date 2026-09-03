@@ -13,8 +13,9 @@ import {
   Truck,
   Hand,
   PackageX,
+  FileText,
 } from "lucide-react";
-import { useGetCall, useActionCall } from "@/hooks";
+import { useGetCall, useActionCall, useQueryParams } from "@/hooks";
 import { SERVICE } from "@/constants/services";
 import { OPTIONS } from "@/constants/others";
 import Loader from "@/components/ui/Loader";
@@ -44,6 +45,7 @@ const EMPTY_FORM = {
 };
 
 export default function BoxRequests() {
+  const { navigate } = useQueryParams();
   const { data, loading, setQuery } = useGetCall(SERVICE.BOX_REQUESTS_LIST);
   const { Post: requestBoxes, loading: requesting } = useActionCall(SERVICE.BOX_REQUEST);
   const { Post: markDelivered, loading: delivering } = useActionCall(SERVICE.BOX_DELIVERED);
@@ -400,6 +402,18 @@ export default function BoxRequests() {
                         Not Received
                       </button>
                     </div>
+                  )}
+
+                  {b.has_invoice && (
+                    <button
+                      onClick={() =>
+                        navigate.push(`/portal/user/invoice/${b.id}`)
+                      }
+                      className="mt-3 w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-800 font-medium active:scale-95 transition-transform"
+                    >
+                      <FileText className="w-4 h-4 mr-1.5" />
+                      Download Invoice
+                    </button>
                   )}
 
                   {Number(b.status) === 4 && (

@@ -65,6 +65,7 @@ const Offers = Loadable(lazy(() => import("@/app/Panel/USER/Offers")));
 const CompanyDocs = Loadable(
   lazy(() => import("@/app/Panel/USER/CompanyDocs"))
 );
+const Invoice = Loadable(lazy(() => import("@/app/Panel/USER/Invoice")));
 const OfferHistory = Loadable(
   lazy(() => import("@/app/Panel/USER/OfferHistory"))
 );
@@ -176,6 +177,11 @@ export default function MobileRoutes(): React.ReactElement | null {
       {
         path: "portal/user/pin-requests",
         element: <PinRequests />,
+      },
+      {
+        // Printable invoice for one delivered batch.
+        path: "portal/user/invoice/:id",
+        element: <Invoice />,
       },
       {
         path: "portal/user/box-requests",
