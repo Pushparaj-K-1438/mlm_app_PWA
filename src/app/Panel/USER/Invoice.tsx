@@ -173,15 +173,7 @@ export default function Invoice() {
           </div>
 
           {/* Supply */}
-          <div className="mt-3 flex flex-wrap justify-between gap-x-6 gap-y-1 px-1 text-xs">
-            {inv.place_of_supply ? (
-              <p className="text-gray-500">
-                Place of Supply{" "}
-                <span className="font-semibold text-gray-800">
-                  {inv.place_of_supply}
-                </span>
-              </p>
-            ) : null}
+          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 px-1 text-xs">
             <p className="text-gray-500">
               Country of Supply{" "}
               <span className="font-semibold text-gray-800">
