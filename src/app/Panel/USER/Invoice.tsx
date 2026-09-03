@@ -1,7 +1,6 @@
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Printer, AlertCircle } from "lucide-react";
+import { ArrowLeft, Download, AlertCircle } from "lucide-react";
 import { useGetCall, useQueryParams } from "@/hooks";
-import { SERVICE } from "@/constants/services";
 import Loader from "@/components/ui/Loader";
 import logo from "@/assets/logo.png";
 
@@ -15,11 +14,10 @@ const money = (value: any) =>
  * Printable invoice for a delivered plan-product batch.
  *
  * Every number comes from the server (InvoiceBuilder) — nothing is calculated
- * here, so the printed document can never disagree with the database.
- *
- * "Download" is print-to-PDF: the browser's own dialog saves it. There is no
- * PDF library on the backend, and this keeps the invoice a real, selectable
- * document rather than a screenshot.
+ * here, so the printed document can never disagree with the database. This
+ * on-screen version is for reading; "Download" fetches the same data
+ * rendered server-side to a real PDF (Dompdf) and saves it directly — a
+ * one-click file, not the browser's print dialog.
  */
 export default function Invoice() {
   const { id } = useParams();
@@ -29,7 +27,27 @@ export default function Invoice() {
     `box-requests/${id}/invoice`
   );
 
+  // Same endpoint family, PDF flavour. avoidFetch: only pulled on click.
+  const { fetchApi: downloadPdf, loading: downloading } = useGetCall(
+    `box-requests/${id}/invoice/download`,
+    { avoidFetch: true }
+  );
+
   const inv = data?.data;
+
+  const handleDownload = () => {
+    // The invoice number can read "startup/26-27/001" — "/" is not safe in a
+    // filename, so it is swapped for "-" the same way the server names the
+    // attachment. Falls back to the batch id if the number isn't known yet.
+    const safeNo = String(inv?.invoice_no ?? id ?? "invoice").replace(
+      /\//g,
+      "-"
+    );
+    downloadPdf({
+      exports: true,
+      downloadFilename: `invoice-${safeNo}.pdf`,
+    });
+  };
 
   if (loading) return <Loader />;
 
@@ -85,11 +103,12 @@ export default function Invoice() {
           Back
         </button>
         <button
-          onClick={() => window.print()}
-          className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white active:scale-95"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white active:scale-95 disabled:opacity-60"
         >
-          <Printer className="mr-1.5 h-4 w-4" />
-          Download / Print
+          <Download className="mr-1.5 h-4 w-4" />
+          {downloading ? "Preparing…" : "Download"}
         </button>
       </div>
 
