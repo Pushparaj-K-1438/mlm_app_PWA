@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, AlertCircle } from "lucide-react";
+import { ArrowLeft, Download, AlertCircle, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 import { useGetCall, useQueryParams } from "@/hooks";
 import { BASE_URL } from "@/constants/services";
@@ -37,31 +37,34 @@ export default function Invoice() {
 
   const inv = data?.data;
 
+  /** Fetch a fresh signed link and resolve it against the API origin. */
+  const getSignedUrl = async (): Promise<string> => {
+    const res: any = await fetchLink({});
+    const path = res?.data?.url;
+    if (!path) throw new Error("Could not prepare the invoice");
+    // Signed relatively, so resolve against the API's origin, not this app's.
+    return new URL(path, BASE_URL).toString();
+  };
+
   /**
    * Download the invoice.
    *
-   * Two constraints shape this, both from the APK wrapper:
+   * Three approaches were ruled out by the APK wrapper, in order:
    *
-   *  1. NOT a blob + <a download>. An Android WebView cannot pass a blob:
-   *     URL to the system download manager, so that silently did nothing.
+   *  1. blob + <a download> — an Android WebView cannot pass a blob: URL to
+   *     the system download manager. Silently did nothing.
+   *  2. window.open / location.href — WebView has no PDF renderer, so it
+   *     painted a blank white screen and dropped the user out of the app.
+   *  3. hidden iframe (this) — never navigates, hands the transfer to the
+   *     download manager. Correct in a browser or TWA, but a bare WebView
+   *     with no DownloadListener still discards it.
    *
-   *  2. NOT window.open / location.href either. WebView has no PDF renderer,
-   *     so pointing it at a PDF just paints a blank white screen and takes
-   *     the user out of the app.
-   *
-   * A hidden iframe threads the needle: the response is sent as an
-   * attachment, so the download is handed to the download manager while the
-   * current page is never navigated or replaced.
+   * Case 3 is why "Open in browser" exists below: it is the only route that
+   * does not depend on the wrapper implementing anything.
    */
   const handleDownload = async () => {
     try {
-      const res: any = await fetchLink({});
-      const path = res?.data?.url;
-      if (!path) throw new Error("Could not prepare the invoice");
-
-      // The link is signed relatively, so point it at the API's own origin
-      // rather than this app's.
-      const url = new URL(path, BASE_URL).toString();
+      const url = await getSignedUrl();
 
       const frame = document.createElement("iframe");
       frame.style.display = "none";
@@ -74,6 +77,36 @@ export default function Invoice() {
       toast.success("Downloading invoice…");
     } catch (e: any) {
       toast.error(e?.message || "Could not download the invoice");
+    }
+  };
+
+  /**
+   * Hand the link to the phone's real browser instead of the WebView.
+   *
+   * On Android an `intent://` URL is not something a WebView can load itself,
+   * so the wrapper passes it to the OS, which opens Chrome — and Chrome
+   * downloads the PDF normally. This needs no native change to the APK, which
+   * is what makes it the dependable escape hatch.
+   *
+   * Anywhere else (real browser, iOS) it is a plain new tab.
+   */
+  const handleOpenInBrowser = async () => {
+    try {
+      const url = await getSignedUrl();
+      const isAndroid = /android/i.test(navigator.userAgent);
+
+      if (isAndroid) {
+        const u = new URL(url);
+        window.location.href =
+          `intent://${u.host}${u.pathname}${u.search}` +
+          `#Intent;scheme=${u.protocol.replace(":", "")};` +
+          `action=android.intent.action.VIEW;end`;
+        return;
+      }
+
+      window.open(url, "_blank", "noopener");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not open the invoice");
     }
   };
 
@@ -130,14 +163,28 @@ export default function Invoice() {
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back
         </button>
-        <button
-          onClick={handleDownload}
-          disabled={downloading}
-          className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white active:scale-95 disabled:opacity-60"
-        >
-          <Download className="mr-1.5 h-4 w-4" />
-          {downloading ? "Preparing…" : "Download"}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Escape hatch for the wrapped APK, where the WebView may discard
+              the download outright. Opening in the phone's own browser always
+              works. */}
+          <button
+            onClick={handleOpenInBrowser}
+            disabled={downloading}
+            className="inline-flex items-center rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 active:scale-95 disabled:opacity-60"
+            title="Open in your phone's browser"
+          >
+            <ExternalLink className="mr-1.5 h-4 w-4" />
+            Browser
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white active:scale-95 disabled:opacity-60"
+          >
+            <Download className="mr-1.5 h-4 w-4" />
+            {downloading ? "Preparing…" : "Download"}
+          </button>
+        </div>
       </div>
 
       <div className="px-3 py-4">
