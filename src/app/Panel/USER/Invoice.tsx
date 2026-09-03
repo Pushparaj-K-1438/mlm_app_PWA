@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Download, AlertCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { useGetCall, useQueryParams } from "@/hooks";
 import { BASE_URL } from "@/constants/services";
@@ -49,18 +49,18 @@ export default function Invoice() {
   /**
    * Download the invoice.
    *
-   * Three approaches were ruled out by the APK wrapper, in order:
+   * Two earlier approaches were ruled out by the APK wrapper:
    *
    *  1. blob + <a download> — an Android WebView cannot pass a blob: URL to
    *     the system download manager. Silently did nothing.
    *  2. window.open / location.href — WebView has no PDF renderer, so it
    *     painted a blank white screen and dropped the user out of the app.
-   *  3. hidden iframe (this) — never navigates, hands the transfer to the
-   *     download manager. Correct in a browser or TWA, but a bare WebView
-   *     with no DownloadListener still discards it.
    *
-   * Case 3 is why "Open in browser" exists below: it is the only route that
-   * does not depend on the wrapper implementing anything.
+   * A hidden iframe pointed at a real, signed URL is what a WebView's
+   * DownloadListener can actually act on: it never navigates the page, and
+   * onDownloadStart receives a genuine URL that DownloadManager can fetch on
+   * its own (which a blob: URL could never be). Works unchanged in a normal
+   * browser too.
    */
   const handleDownload = async () => {
     try {
@@ -77,36 +77,6 @@ export default function Invoice() {
       toast.success("Downloading invoice…");
     } catch (e: any) {
       toast.error(e?.message || "Could not download the invoice");
-    }
-  };
-
-  /**
-   * Hand the link to the phone's real browser instead of the WebView.
-   *
-   * On Android an `intent://` URL is not something a WebView can load itself,
-   * so the wrapper passes it to the OS, which opens Chrome — and Chrome
-   * downloads the PDF normally. This needs no native change to the APK, which
-   * is what makes it the dependable escape hatch.
-   *
-   * Anywhere else (real browser, iOS) it is a plain new tab.
-   */
-  const handleOpenInBrowser = async () => {
-    try {
-      const url = await getSignedUrl();
-      const isAndroid = /android/i.test(navigator.userAgent);
-
-      if (isAndroid) {
-        const u = new URL(url);
-        window.location.href =
-          `intent://${u.host}${u.pathname}${u.search}` +
-          `#Intent;scheme=${u.protocol.replace(":", "")};` +
-          `action=android.intent.action.VIEW;end`;
-        return;
-      }
-
-      window.open(url, "_blank", "noopener");
-    } catch (e: any) {
-      toast.error(e?.message || "Could not open the invoice");
     }
   };
 
@@ -163,28 +133,14 @@ export default function Invoice() {
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back
         </button>
-        <div className="flex items-center gap-2">
-          {/* Escape hatch for the wrapped APK, where the WebView may discard
-              the download outright. Opening in the phone's own browser always
-              works. */}
-          <button
-            onClick={handleOpenInBrowser}
-            disabled={downloading}
-            className="inline-flex items-center rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 active:scale-95 disabled:opacity-60"
-            title="Open in your phone's browser"
-          >
-            <ExternalLink className="mr-1.5 h-4 w-4" />
-            Browser
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white active:scale-95 disabled:opacity-60"
-          >
-            <Download className="mr-1.5 h-4 w-4" />
-            {downloading ? "Preparing…" : "Download"}
-          </button>
-        </div>
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white active:scale-95 disabled:opacity-60"
+        >
+          <Download className="mr-1.5 h-4 w-4" />
+          {downloading ? "Preparing…" : "Download"}
+        </button>
       </div>
 
       <div className="px-3 py-4">
