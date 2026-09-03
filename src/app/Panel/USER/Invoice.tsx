@@ -40,17 +40,20 @@ export default function Invoice() {
   /**
    * Download the invoice.
    *
-   * Deliberately NOT a blob + <a download>: this app also ships wrapped as an
-   * APK, and an Android WebView cannot hand a blob URL to the system download
-   * manager — the click simply does nothing, with no error. Navigating to a
-   * real URL is an ordinary HTTP GET the wrapper (or the browser) knows how to
-   * save, and the server sends it as an attachment.
+   * Two constraints shape this, both from the APK wrapper:
    *
-   * The window is opened synchronously, before the await, or a pop-up blocker
-   * treats it as programmatic and swallows it.
+   *  1. NOT a blob + <a download>. An Android WebView cannot pass a blob:
+   *     URL to the system download manager, so that silently did nothing.
+   *
+   *  2. NOT window.open / location.href either. WebView has no PDF renderer,
+   *     so pointing it at a PDF just paints a blank white screen and takes
+   *     the user out of the app.
+   *
+   * A hidden iframe threads the needle: the response is sent as an
+   * attachment, so the download is handed to the download manager while the
+   * current page is never navigated or replaced.
    */
   const handleDownload = async () => {
-    const tab = window.open("", "_blank");
     try {
       const res: any = await fetchLink({});
       const path = res?.data?.url;
@@ -60,15 +63,16 @@ export default function Invoice() {
       // rather than this app's.
       const url = new URL(path, BASE_URL).toString();
 
-      if (tab) {
-        tab.location.href = url;
-      } else {
-        // Pop-up blocked — fall back to navigating this window. The response
-        // is an attachment, so the page itself is not replaced.
-        window.location.href = url;
-      }
+      const frame = document.createElement("iframe");
+      frame.style.display = "none";
+      frame.src = url;
+      document.body.appendChild(frame);
+
+      // Leave it attached long enough for the transfer to start, then tidy up.
+      setTimeout(() => frame.remove(), 60_000);
+
+      toast.success("Downloading invoice…");
     } catch (e: any) {
-      tab?.close();
       toast.error(e?.message || "Could not download the invoice");
     }
   };
