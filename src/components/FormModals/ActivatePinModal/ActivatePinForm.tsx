@@ -13,12 +13,14 @@ export const VALIDATION_SCHEMA = Yup.object().shape({
   gift_delivery_type: Yup.string().required("Required Gift Delivery Type*"),
   wh_number: Yup.string().required("Required Mobile Number*"),
   direct_pick_date: Yup.string().when("gift_delivery_type", {
-    is: "1",
+    // String() so a numeric 1 from the API still counts as Direct — `is: "1"`
+    // silently never matched, so this field's "required" rule never fired.
+    is: (v: any) => String(v) === "1",
     then: (schema) => schema.required("Required Direct Pick Date*"),
     otherwise: (schema) => schema.optional(),
   }),
   gift_delivery_address: Yup.string().when("gift_delivery_type", {
-    is: "2",
+    is: (v: any) => String(v) === "2",
     then: (schema) => schema.required("Required Gift Delivery Address*"),
     otherwise: (schema) => schema.optional(),
   }),
@@ -61,8 +63,18 @@ const ActivatePinForm = ({
     initialValues: {
       id: data?.id ?? "",
       pin: data?.pin ?? "",
-      gift_delivery_type: data?.gift_delivery_type ?? "",
+      // MUST be a string. The API sends this as a number, and a numeric 1 makes
+      // the <select> display "Direct" (the DOM coerces it to match the option)
+      // while every comparison against "1" fails — so the Direct Pick Date
+      // field stayed hidden and its "required" rule never fired, until the user
+      // changed the dropdown and handleChange finally produced a string.
+      gift_delivery_type:
+        data?.gift_delivery_type != null && data?.gift_delivery_type !== ""
+          ? String(data.gift_delivery_type)
+          : "",
       gift_delivery_address: data?.gift_delivery_address ?? "",
+      // Was missing entirely, leaving the date input uncontrolled.
+      direct_pick_date: data?.direct_pick_date ?? "",
       wh_number: data?.user?.mobile ?? "",
       box_quantity: "",
     },
@@ -134,7 +146,7 @@ const ActivatePinForm = ({
       </div>
 
       {/* Conditional Fields */}
-      {values.gift_delivery_type === "2" && (
+      {String(values.gift_delivery_type) === "2" && (
         <div>
           <div className="flex items-center mb-2">
             <MapPin className="w-5 h-5 text-gray-500 mr-2" />
@@ -150,7 +162,7 @@ const ActivatePinForm = ({
         </div>
       )}
 
-      {values.gift_delivery_type === "1" && (
+      {String(values.gift_delivery_type) === "1" && (
         <div>
           <div className="flex items-center mb-2">
             <Calendar className="w-5 h-5 text-gray-500 mr-2" />
