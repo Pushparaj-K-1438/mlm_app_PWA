@@ -286,8 +286,13 @@ function PinRequestsPage() {
         </div>
       </div>
 
-      {/* Pins Ready for Activation */}
-      {pinRequests?.data?.some((pin) => pin.status === 1) && (
+      {/* Pins Ready for Activation.
+          Only the CURRENT request counts — data[0], the newest row. This used
+          to scan every row the user had ever had, so an old cycle whose pin was
+          generated but never activated kept showing here. The effect was a pin
+          appearing the instant a brand-new term was accepted, as though one had
+          been generated without the admin doing anything. */}
+      {Number(pinRequests?.data?.[0]?.status) === 1 && (
         <div className="px-6 mt-6">
           <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
             <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
@@ -296,7 +301,8 @@ function PinRequestsPage() {
             </h3>
             <div className="space-y-4">
               {pinRequests?.data
-                ?.filter((pin) => pin.status === 1)
+                ?.slice(0, 1)
+                .filter((pin) => Number(pin.status) === 1)
                 .map((pin) => (
                   <div
                     key={pin.id}
